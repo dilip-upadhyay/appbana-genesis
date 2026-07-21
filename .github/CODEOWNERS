@@ -1,0 +1,17 @@
+# CODEOWNERS
+# Update handles once GitHub org / team is finalized.
+
+# Default: architecture owner reviews everything until team is bootstrapped
+* @dilip
+
+# Architecture & ADRs
+/architecture.md            @dilip
+/execution-plan.md          @dilip
+/docs/adr/                  @dilip
+/docs/architecture/         @dilip
+
+# Schemas — canonical contracts, require architecture review
+/docs/schemas/              @dilip
+
+# CI / infra
+/.github/                   @dilip
