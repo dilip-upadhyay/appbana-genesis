@@ -14,6 +14,12 @@
       "examples": [
         "examples/customer-onboarding/aim.json"
       ]
+    },
+    {
+      "name": "CAM v0.1 — schema meta-check",
+      "$comment": "CAM v0.1 schema loads without a reference example yet. The Customer Onboarding CAM example lands in the next step and will be added here.",
+      "schema": "docs/schemas/cam.v0.1.schema.json",
+      "examples": []
     }
   ]
 }

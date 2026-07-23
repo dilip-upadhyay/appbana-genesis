@@ -1,0 +1,1009 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.appbana.dev/cam/v0.1",
+  "title": "Canonical Application Model v0.1",
+  "description": "The Canonical Application Model (CAM) is the deterministic execution artifact consumed by the Platform Kernel and the eight runtime engines. See ADR-011 (BIM/AIM/CAM boundary), ADR-012 (CAM versioning), and ADR-013 (runtime engine contract). CAM is generated deterministically from an AIM — never AI-produced, never hand-edited in normal flow. The envelope carries an envelopeVersion (major.minor) and ten named sub-model slots; each sub-model carries its own semver per ADR-012. The IntegrationModel and DeploymentModel slots are structural stubs in v0.1 (Phase 3 / Phase 5 will fill them). Rule expressions use the canonical AST defined in $defs.expression.",
+
+  "type": "object",
+  "required": [
+    "envelopeVersion",
+    "metadata",
+    "InteractionModel",
+    "WorkflowModel",
+    "RuleModel",
+    "OperationModel",
+    "DataModel",
+    "IntegrationModel",
+    "SecurityModel",
+    "ObservabilityModel",
+    "DeploymentModel",
+    "MetadataModel"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": { "type": "string" },
+    "envelopeVersion": { "$ref": "#/$defs/envelopeSemver" },
+    "metadata": { "$ref": "#/$defs/envelopeMetadata" },
+    "InteractionModel": { "$ref": "#/$defs/interactionModel" },
+    "WorkflowModel": { "$ref": "#/$defs/workflowModel" },
+    "RuleModel": { "$ref": "#/$defs/ruleModel" },
+    "OperationModel": { "$ref": "#/$defs/operationModel" },
+    "DataModel": { "$ref": "#/$defs/dataModel" },
+    "IntegrationModel": { "$ref": "#/$defs/integrationModel" },
+    "SecurityModel": { "$ref": "#/$defs/securityModel" },
+    "ObservabilityModel": { "$ref": "#/$defs/observabilityModel" },
+    "DeploymentModel": { "$ref": "#/$defs/deploymentModel" },
+    "MetadataModel": { "$ref": "#/$defs/metadataModel" }
+  },
+
+  "$defs": {
+    "semverString": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "envelopeSemver": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Two-part semver (major.minor) for the CAM envelope shape. Starts at '1.0' per ADR-012."
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "isoDatetime": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "roleId": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" },
+    "entityId": { "type": "string", "pattern": "^entity\\.[a-z][a-z0-9-]*$" },
+    "ruleId": { "type": "string", "pattern": "^rule\\.[a-z][a-z0-9-]*$" },
+    "enumId": { "type": "string", "pattern": "^enum\\.[a-z][a-z0-9-]*$" },
+    "operationId": { "type": "string", "pattern": "^operation\\.[a-z][a-z0-9.-]*$" },
+    "operationRef": { "type": "string", "pattern": "^operation\\.[a-z][a-z0-9.-]*:v[0-9]+$" },
+    "stateMachineId": { "type": "string", "pattern": "^state-machine\\.[a-z][a-z0-9-]*$" },
+    "screenId": { "type": "string", "pattern": "^screen\\.[a-z][a-z0-9-]*$" },
+    "sectionId": { "type": "string", "pattern": "^section\\.[a-z][a-z0-9-]*$" },
+    "eventKindId": { "type": "string", "pattern": "^event\\.[a-z][a-z0-9.-]*$" },
+    "metricId": { "type": "string", "pattern": "^metric\\.[a-z][a-z0-9.-]*$" },
+
+    "contentHash": {
+      "type": "string",
+      "pattern": "^sha256:([0-9a-f]{64}|__pending__)$"
+    },
+
+    "envelopeMetadata": {
+      "type": "object",
+      "required": ["camId", "camReleaseTag", "generatedAt", "sourceAim", "generator"],
+      "additionalProperties": false,
+      "properties": {
+        "camId": { "type": "string", "pattern": "^cam\\.[a-z0-9][a-z0-9-]*$" },
+        "camReleaseTag": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*@[0-9]{4}\\.[0-9]{2}(\\.[0-9]{2})?(-[0-9A-Za-z.-]+)?$",
+          "description": "Human-facing release tag per ADR-012 (e.g., 'onboarding@2026.07'). Not consumed by engines."
+        },
+        "appId": { "type": "string" },
+        "tenantId": { "type": ["string", "null"] },
+        "environment": {
+          "type": "string",
+          "enum": ["dev", "staging", "canary", "prod"]
+        },
+        "generatedAt": { "$ref": "#/$defs/isoDatetime" },
+        "sourceAim": {
+          "type": "object",
+          "required": ["id", "version", "contentHash"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string", "pattern": "^aim\\.[a-z0-9][a-z0-9-]*$" },
+            "version": { "$ref": "#/$defs/semverString" },
+            "contentHash": { "$ref": "#/$defs/contentHash" }
+          }
+        },
+        "generator": {
+          "type": "object",
+          "required": ["name", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "$ref": "#/$defs/nonEmptyString" },
+            "version": { "$ref": "#/$defs/semverString" }
+          }
+        }
+      }
+    },
+
+    "expression": {
+      "$comment": "Canonical rule AST for the Rules Runtime (Phase 2 vocabulary per ADR-013: boolean logic, comparisons, string ops, and rule references). Every expression is one of the discriminated shapes below; unknown ops must be rejected by the rules engine at load with a Diagnostic.",
+      "oneOf": [
+        { "type": "object", "required": ["op"], "additionalProperties": false, "properties": { "op": { "const": "always" } } },
+        { "type": "object", "required": ["op"], "additionalProperties": false, "properties": { "op": { "const": "never" } } },
+        {
+          "type": "object", "required": ["op", "operands"], "additionalProperties": false,
+          "properties": {
+            "op": { "enum": ["and", "or"] },
+            "operands": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/expression" } }
+          }
+        },
+        {
+          "type": "object", "required": ["op", "operand"], "additionalProperties": false,
+          "properties": {
+            "op": { "const": "not" },
+            "operand": { "$ref": "#/$defs/expression" }
+          }
+        },
+        {
+          "type": "object", "required": ["op", "left", "right"], "additionalProperties": false,
+          "properties": {
+            "op": { "enum": ["eq", "neq", "lt", "lte", "gt", "gte"] },
+            "left": { "$ref": "#/$defs/operand" },
+            "right": { "$ref": "#/$defs/operand" }
+          }
+        },
+        {
+          "type": "object", "required": ["op", "value", "list"], "additionalProperties": false,
+          "properties": {
+            "op": { "const": "in" },
+            "value": { "$ref": "#/$defs/operand" },
+            "list": { "type": "array", "items": { "$ref": "#/$defs/operand" } }
+          }
+        },
+        {
+          "type": "object", "required": ["op", "value", "pattern"], "additionalProperties": false,
+          "properties": {
+            "op": { "const": "matches" },
+            "value": { "$ref": "#/$defs/operand" },
+            "pattern": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object", "required": ["op", "ruleId"], "additionalProperties": false,
+          "properties": {
+            "op": { "const": "ref" },
+            "ruleId": { "$ref": "#/$defs/ruleId" }
+          }
+        },
+        {
+          "type": "object", "required": ["op", "roleId"], "additionalProperties": false,
+          "properties": {
+            "op": { "const": "role-is" },
+            "roleId": { "$ref": "#/$defs/roleId" }
+          }
+        }
+      ]
+    },
+
+    "operand": {
+      "oneOf": [
+        {
+          "type": "object", "required": ["path"], "additionalProperties": false,
+          "properties": { "path": { "$ref": "#/$defs/nonEmptyString" } }
+        },
+        {
+          "type": "object", "required": ["literal"], "additionalProperties": false,
+          "properties": { "literal": {} }
+        }
+      ]
+    },
+
+    "ruleAction": {
+      "type": "object",
+      "required": ["action"],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["require-field", "match-pattern", "require-documents", "set-value", "reject-if-empty", "set-visibility"]
+        },
+        "entity": { "$ref": "#/$defs/entityId" },
+        "field": { "type": "string" },
+        "pattern": { "type": "string" },
+        "label": { "type": "string" },
+        "documentTypes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "value": {},
+        "visibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowRoles": { "type": "array", "items": { "$ref": "#/$defs/roleId" } },
+            "denyRoles": { "type": "array", "items": { "$ref": "#/$defs/roleId" } }
+          }
+        }
+      }
+    },
+
+    "enumDef": {
+      "type": "object",
+      "required": ["id", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/enumId" },
+        "description": { "type": "string" },
+        "closedStrictly": {
+          "type": "boolean",
+          "default": false,
+          "description": "Governance signal per ADR-012. When true, adding a value is a MAJOR (breaking) change requiring a migration entry and the full ADR-017 publication gate."
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "value": { "$ref": "#/$defs/nonEmptyString" },
+              "label": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      }
+    },
+
+    "field": {
+      "type": "object",
+      "required": ["id", "type", "required", "classification"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9]*$" },
+        "type": {
+          "type": "string",
+          "enum": ["string", "text", "integer", "decimal", "boolean", "date", "datetime", "enum", "reference", "file", "money"]
+        },
+        "format": { "type": "string" },
+        "required": { "type": "boolean" },
+        "classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "pii", "sensitive-pii"]
+        },
+        "immutable": { "type": "boolean" },
+        "enumRef": { "type": ["string", "null"], "pattern": "^enum\\.[a-z][a-z0-9-]*$" },
+        "allowedValues": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "referenceTo": {
+          "type": "string",
+          "pattern": "^(entity|role)\\.[a-z][a-z0-9-]*$"
+        },
+        "cardinality": {
+          "type": "string",
+          "enum": ["one", "zero-or-one", "many", "one-or-many"]
+        },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "minLength": { "type": "integer", "minimum": 0 },
+        "maxLength": { "type": "integer", "minimum": 1 },
+        "pattern": { "type": "string" },
+        "currency": { "type": "string" },
+        "stateMachineRef": { "$ref": "#/$defs/stateMachineId" },
+        "derivedFromRuleRef": { "$ref": "#/$defs/ruleId" }
+      }
+    },
+
+    "interactionModel": {
+      "type": "object",
+      "required": ["version", "screens"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "screens": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/screen" }
+        },
+        "messages": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Localizable message bundle. Keys are message ids; values are the resolved default-locale strings."
+        }
+      }
+    },
+
+    "screen": {
+      "type": "object",
+      "required": ["id", "title", "assignedTo", "sections"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/screenId" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "kind": {
+          "type": "string",
+          "enum": ["form", "review", "list", "detail", "dashboard"],
+          "default": "form"
+        },
+        "assignedTo": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/roleId" }
+        },
+        "entryConditionRef": { "$ref": "#/$defs/ruleId" },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/section" }
+        }
+      }
+    },
+
+    "section": {
+      "type": "object",
+      "required": ["id", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/sectionId" },
+        "title": { "type": "string" },
+        "visibleWhenRef": { "$ref": "#/$defs/ruleId" },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fieldBinding" }
+        }
+      }
+    },
+
+    "fieldBinding": {
+      "type": "object",
+      "required": ["id", "entityRef", "fieldRef", "control", "order"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^field-binding\\.[a-z][a-z0-9.-]*$" },
+        "entityRef": { "$ref": "#/$defs/entityId" },
+        "fieldRef": { "$ref": "#/$defs/nonEmptyString" },
+        "label": { "type": "string" },
+        "helpText": { "type": "string" },
+        "control": {
+          "type": "string",
+          "enum": ["text", "textarea", "number", "select", "multiselect", "date", "datetime", "boolean", "file-upload", "money", "email", "phone", "readonly"]
+        },
+        "order": { "type": "integer", "minimum": 0 },
+        "visibleWhenRef": { "$ref": "#/$defs/ruleId" },
+        "editableWhenRef": { "$ref": "#/$defs/ruleId" },
+        "requiredWhenRef": { "$ref": "#/$defs/ruleId" }
+      }
+    },
+
+    "workflowModel": {
+      "type": "object",
+      "required": ["version", "stateMachines"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "stateMachines": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/stateMachine" }
+        },
+        "assignmentPolicies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assignmentPolicy" }
+        },
+        "delegationPolicies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/delegationPolicy" }
+        }
+      }
+    },
+
+    "stateMachine": {
+      "type": "object",
+      "required": ["id", "entityRef", "fieldRef", "initialState", "states", "transitions"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/stateMachineId" },
+        "entityRef": { "$ref": "#/$defs/entityId" },
+        "fieldRef": { "$ref": "#/$defs/nonEmptyString" },
+        "initialState": { "$ref": "#/$defs/nonEmptyString" },
+        "terminalStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/nonEmptyString" },
+              "assignedTo": { "$ref": "#/$defs/roleId" },
+              "terminal": { "type": "boolean" }
+            }
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/transition" }
+        },
+        "retention": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "draftMaxAgeDays": { "type": "integer", "minimum": 0 },
+            "draftExpiryEffect": { "type": "string", "enum": ["auto-discard", "auto-archive", "none"] },
+            "terminalRecordsImmutable": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "transition": {
+      "type": "object",
+      "required": ["id", "from", "to", "triggeredBy", "allowedRoles"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "from": { "$ref": "#/$defs/nonEmptyString" },
+        "to": { "$ref": "#/$defs/nonEmptyString" },
+        "triggeredBy": { "$ref": "#/$defs/operationRef" },
+        "allowedRoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/roleId" }
+        },
+        "guardRef": { "$ref": "#/$defs/ruleId" },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" }
+        }
+      }
+    },
+
+    "effect": {
+      "$comment": "The effect shapes permitted inside CAM. These are declarative — the Platform Kernel materializes them into ADR-013 EffectDescriptors at runtime.",
+      "oneOf": [
+        {
+          "type": "object", "required": ["type", "policy"], "additionalProperties": false,
+          "properties": {
+            "type": { "const": "assign-reviewer" },
+            "policy": { "type": "string", "enum": ["round-robin", "workload-based", "manual"] }
+          }
+        },
+        {
+          "type": "object", "required": ["type", "eventKindRef"], "additionalProperties": false,
+          "properties": {
+            "type": { "const": "emit-trace" },
+            "eventKindRef": { "$ref": "#/$defs/eventKindId" }
+          }
+        },
+        {
+          "type": "object", "required": ["type", "template", "recipients"], "additionalProperties": false,
+          "properties": {
+            "type": { "const": "notify" },
+            "template": { "$ref": "#/$defs/nonEmptyString" },
+            "recipients": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        {
+          "type": "object", "required": ["type", "field"], "additionalProperties": false,
+          "properties": {
+            "type": { "const": "require-field" },
+            "field": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object", "required": ["type", "operationRef"], "additionalProperties": false,
+          "properties": {
+            "type": { "const": "dispatch-operation" },
+            "operationRef": { "$ref": "#/$defs/operationRef" }
+          }
+        }
+      ]
+    },
+
+    "assignmentPolicy": {
+      "type": "object",
+      "required": ["id", "targetRole", "policy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "targetRole": { "$ref": "#/$defs/roleId" },
+        "policy": { "type": "string", "enum": ["round-robin", "workload-based", "manual"] }
+      }
+    },
+
+    "delegationPolicy": {
+      "type": "object",
+      "required": ["id", "fromRole", "toRole"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "fromRole": { "$ref": "#/$defs/roleId" },
+        "toRole": { "$ref": "#/$defs/roleId" },
+        "conditionRef": { "$ref": "#/$defs/ruleId" }
+      }
+    },
+
+    "ruleModel": {
+      "type": "object",
+      "required": ["version", "rules"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rule" }
+        }
+      }
+    },
+
+    "rule": {
+      "type": "object",
+      "required": ["id", "kind", "description", "priority"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/ruleId" },
+        "kind": {
+          "type": "string",
+          "enum": ["field-requirement", "field-constraint", "field-visibility", "document-requirement", "derived-field", "transition-guard"]
+        },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "sourceAimRuleId": { "type": "string" },
+        "when": { "$ref": "#/$defs/expression" },
+        "condition": { "$ref": "#/$defs/expression" },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["when", "then"],
+            "additionalProperties": false,
+            "properties": {
+              "when": { "$ref": "#/$defs/expression" },
+              "then": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/ruleAction" }
+              }
+            }
+          }
+        },
+        "then": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ruleAction" }
+        },
+        "target": {
+          "type": "object",
+          "required": ["entity", "field"],
+          "additionalProperties": false,
+          "properties": {
+            "entity": { "$ref": "#/$defs/entityId" },
+            "field": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["entity", "field"],
+            "additionalProperties": false,
+            "properties": {
+              "entity": { "$ref": "#/$defs/entityId" },
+              "field": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      }
+    },
+
+    "operationModel": {
+      "type": "object",
+      "required": ["version", "operations"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/operation" }
+        }
+      }
+    },
+
+    "operation": {
+      "type": "object",
+      "required": ["id", "version", "allowedRoles", "idempotency", "sideEffects", "auditEvent", "adapter"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/operationId" },
+        "version": { "type": "string", "pattern": "^[0-9]+$" },
+        "allowedRoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/roleId" }
+        },
+        "idempotency": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "enum": ["client-key", "pure", "content-hash", "state-guarded"] },
+            "keyField": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        "retryPolicy": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "enum": ["none", "fixed", "exponential"] },
+            "maxAttempts": { "type": "integer", "minimum": 1, "maximum": 20 },
+            "backoffMs": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "guardRef": { "$ref": "#/$defs/ruleId" },
+        "sideEffects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "auditEvent": { "$ref": "#/$defs/nonEmptyString" },
+        "adapter": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["internal", "data", "integration", "notification", "storage"]
+            },
+            "binding": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        "errorTaxonomy": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "retryable"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "$ref": "#/$defs/nonEmptyString" },
+              "retryable": { "type": "boolean" },
+              "userMessage": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "dataModel": {
+      "type": "object",
+      "required": ["version", "entities", "enums"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "entities": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/entity" }
+        },
+        "enums": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/enumDef" }
+        },
+        "indexes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/index" }
+        }
+      }
+    },
+
+    "entity": {
+      "type": "object",
+      "required": ["id", "name", "keys", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/entityId" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "description": { "type": "string" },
+        "keys": {
+          "type": "object",
+          "required": ["primary"],
+          "additionalProperties": false,
+          "properties": {
+            "primary": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/field" }
+        }
+      }
+    },
+
+    "index": {
+      "type": "object",
+      "required": ["id", "entityRef", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^index\\.[a-z][a-z0-9.-]*$" },
+        "entityRef": { "$ref": "#/$defs/entityId" },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "unique": { "type": "boolean" }
+      }
+    },
+
+    "integrationModel": {
+      "$comment": "Structural stub in v0.1. Phase 3 (Integration + Java adapter) fills this in with endpoints, protocols, and message formats. v0.1 permits empty arrays so a CAM can validate without integrations.",
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "endpoints": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "messageFormats": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    },
+
+    "securityModel": {
+      "type": "object",
+      "required": ["version", "roles", "fieldAbacPolicies", "dataClassifications"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/roleDef" }
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/permission" }
+        },
+        "fieldAbacPolicies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fieldAbacPolicy" }
+        },
+        "dataClassifications": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/dataClassificationPolicy" }
+        }
+      }
+    },
+
+    "roleDef": {
+      "type": "object",
+      "required": ["id", "trust"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/roleId" },
+        "description": { "type": "string" },
+        "trust": { "type": "string", "enum": ["external", "internal-staff", "system"] },
+        "canAssumeAny": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/roleId" }
+        },
+        "readOnly": { "type": "boolean" }
+      }
+    },
+
+    "permission": {
+      "type": "object",
+      "required": ["roleId", "resource", "actions"],
+      "additionalProperties": false,
+      "properties": {
+        "roleId": { "$ref": "#/$defs/roleId" },
+        "resource": { "$ref": "#/$defs/nonEmptyString" },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["read", "create", "update", "delete", "invoke", "approve", "reject"]
+          }
+        }
+      }
+    },
+
+    "fieldAbacPolicy": {
+      "type": "object",
+      "required": ["id", "targets"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^abac\\.[a-z][a-z0-9.-]*$" },
+        "description": { "type": "string" },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["entity", "field"],
+            "additionalProperties": false,
+            "properties": {
+              "entity": { "$ref": "#/$defs/entityId" },
+              "field": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "allowRoles": { "type": "array", "items": { "$ref": "#/$defs/roleId" } },
+        "denyRoles": { "type": "array", "items": { "$ref": "#/$defs/roleId" } },
+        "conditionRef": { "$ref": "#/$defs/ruleId" }
+      }
+    },
+
+    "dataClassificationPolicy": {
+      "type": "object",
+      "required": ["classification", "policy"],
+      "additionalProperties": false,
+      "properties": {
+        "classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "pii", "sensitive-pii"]
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maskInLogs": { "type": "boolean" },
+            "maskInUi": {
+              "type": "string",
+              "enum": ["none", "last4-only", "first-letter-only", "full-mask"]
+            },
+            "encryptionAtRest": { "type": "string", "enum": ["none", "AES-256"] },
+            "encryptionInTransit": { "type": "string", "enum": ["none", "TLS-1.2+", "TLS-1.3"] }
+          }
+        }
+      }
+    },
+
+    "observabilityModel": {
+      "type": "object",
+      "required": ["version", "traceEventKinds"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "traceEventKinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/traceEventKind" }
+        },
+        "metrics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/metricDef" }
+        },
+        "auditLog": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "retentionDays": { "type": "integer", "minimum": 1 },
+            "storeSensitivePayloads": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "traceEventKind": {
+      "type": "object",
+      "required": ["id", "producedBy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/eventKindId" },
+        "description": { "type": "string" },
+        "producedBy": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "runtime-interaction-ui",
+              "runtime-workflow",
+              "runtime-rules",
+              "runtime-operations",
+              "runtime-data",
+              "runtime-integration",
+              "runtime-security-policy",
+              "runtime-observability"
+            ]
+          }
+        },
+        "retentionDays": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "metricDef": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/metricId" },
+        "kind": { "type": "string", "enum": ["counter", "gauge", "histogram"] },
+        "unit": { "type": "string" },
+        "dimensions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    },
+
+    "deploymentModel": {
+      "$comment": "Structural stub in v0.1. Phase 5 (Deployment & On-Premises) fills this in with topology, resource requirements, and environment configuration. v0.1 permits empty arrays so a CAM can validate without a deployment plan.",
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "topology": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["saas-multi-tenant", "dedicated-cloud", "air-gapped-on-prem", "unspecified"]
+            }
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    },
+
+    "metadataModel": {
+      "type": "object",
+      "required": ["version", "appId", "provenanceChain"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "appId": { "$ref": "#/$defs/nonEmptyString" },
+        "appVersion": { "$ref": "#/$defs/semverString" },
+        "tenantId": { "type": ["string", "null"] },
+        "tags": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "provenanceChain": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/provenanceLink" }
+        }
+      }
+    },
+
+    "provenanceLink": {
+      "type": "object",
+      "required": ["stage", "artifactId", "version", "contentHash", "producedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": ["bim", "aim", "cam"]
+        },
+        "artifactId": { "$ref": "#/$defs/nonEmptyString" },
+        "version": { "$ref": "#/$defs/semverString" },
+        "contentHash": { "$ref": "#/$defs/contentHash" },
+        "producedAt": { "$ref": "#/$defs/isoDatetime" },
+        "producedBy": { "type": "string" },
+        "modelAdapter": { "type": ["string", "null"] },
+        "modelId": { "type": ["string", "null"] },
+        "promptTemplateId": { "type": ["string", "null"] },
+        "promptTemplateVersion": { "type": ["string", "null"] },
+        "reviewedBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    }
+  }
+}

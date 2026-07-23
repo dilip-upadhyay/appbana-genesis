@@ -137,6 +137,11 @@
       "properties": {
         "id": { "type": "string", "pattern": "^enum\\.[a-z][a-z0-9-]*$" },
         "description": { "type": "string" },
+        "closedStrictly": {
+          "type": "boolean",
+          "default": false,
+          "description": "Governance signal per ADR-012. When true, adding a value to this enum is a MAJOR (breaking) change and requires a migration entry and the full ADR-017 publication gate. Recommended for financial, regulatory, security-classification, workflow-status, and role enums. When false or absent, additions are minor bumps."
+        },
         "values": {
           "type": "array",
           "minItems": 1,

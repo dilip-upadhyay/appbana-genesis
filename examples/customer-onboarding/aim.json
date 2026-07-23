@@ -77,6 +77,7 @@
     },
     {
       "id": "enum.risk-band",
+      "closedStrictly": true,
       "values": [
         { "value": "low", "label": "Low" },
         { "value": "medium", "label": "Medium" },
@@ -85,6 +86,7 @@
     },
     {
       "id": "enum.case-status",
+      "closedStrictly": true,
       "values": [
         { "value": "draft", "label": "Draft" },
         { "value": "submitted", "label": "Submitted" },
@@ -97,6 +99,7 @@
     },
     {
       "id": "enum.document-type",
+      "closedStrictly": true,
       "values": [
         { "value": "pan-card", "label": "PAN card" },
         { "value": "gst-certificate", "label": "GST certificate" },

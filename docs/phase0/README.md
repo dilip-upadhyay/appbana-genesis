@@ -25,7 +25,7 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 |---|---|---|
 | [BIM v0.1](../schemas/bim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
 | [AIM v0.1](../schemas/aim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
-| CAM v0.1 (10 sub-models) | ⏳ Not started | _TBD_ |
+| [CAM v0.1](../schemas/cam.v0.1.schema.json) | ✅ v0.1 published (schema meta-checked; reference `cam.json` pending) | Dilip |
 | Operation Contract v0.1 | ⏳ Not started | _TBD_ |
 | Trace Event v0.1 | ⏳ Not started | _TBD_ |
 

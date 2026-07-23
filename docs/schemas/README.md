@@ -8,7 +8,7 @@ This directory contains versioned JSON Schemas for every canonical artifact in A
 |---|---|---|---|
 | Business Intent Model | [bim.v0.1.schema.json](bim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)) |
 | Application Intent Model | [aim.v0.1.schema.json](aim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json)) |
-| Canonical Application Model | `cam.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
+| Canonical Application Model | [cam.v0.1.schema.json](cam.v0.1.schema.json) | v0.1 | ✅ Published (schema meta-checked; reference `examples/customer-onboarding/cam.json` pending) |
 | Operation Contract | `operation-contract.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
 | Trace Event | `trace-event.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
 
