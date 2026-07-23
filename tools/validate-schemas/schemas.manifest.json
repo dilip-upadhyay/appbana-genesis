@@ -7,6 +7,13 @@
       "examples": [
         "examples/customer-onboarding/bim.json"
       ]
+    },
+    {
+      "name": "AIM v0.1 — Customer Onboarding",
+      "schema": "docs/schemas/aim.v0.1.schema.json",
+      "examples": [
+        "examples/customer-onboarding/aim.json"
+      ]
     }
   ]
 }

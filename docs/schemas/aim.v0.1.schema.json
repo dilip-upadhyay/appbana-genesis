@@ -1,0 +1,589 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.appbana.dev/aim/v0.1",
+  "title": "Application Intent Model v0.1",
+  "description": "The Application Intent Model (AIM) is the canonical, zero-ambiguity representation of a business capability, produced from the BIM by the AI translation pipeline. Every reference resolves; every rule is a structured expression; every operation is contract-defined. See ADR-011 for the BIM vs AIM boundary. The deterministic CAM Generator consumes this AIM to produce the 10-sub-model CAM.",
+  "type": "object",
+  "required": [
+    "aimVersion",
+    "schemaVersion",
+    "metadata",
+    "roles",
+    "entities",
+    "stateMachines",
+    "rules",
+    "operations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": { "type": "string" },
+    "aimVersion": { "$ref": "#/$defs/semverString" },
+    "schemaVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "roles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/role" } },
+    "enums": { "type": "array", "items": { "$ref": "#/$defs/enumDef" } },
+    "entities": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/entity" } },
+    "stateMachines": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/stateMachine" } },
+    "rules": { "type": "array", "items": { "$ref": "#/$defs/rule" } },
+    "operations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/operation" } },
+    "documents": { "$ref": "#/$defs/documentsPolicy" },
+    "nonFunctional": { "type": "array", "items": { "$ref": "#/$defs/nonFunctionalItem" } },
+    "traceability": { "type": "array", "items": { "$ref": "#/$defs/traceabilityEntry" } },
+    "openIssues": { "type": "array", "items": { "$ref": "#/$defs/openIssue" } }
+  },
+
+  "$defs": {
+    "semverString": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9][a-z0-9-]*)+(:v[0-9]+)?$",
+      "description": "Canonical AIM identifier. Dot-namespaced, kebab-case within a segment, optional ':vN' version suffix for operations."
+    },
+    "expression": {
+      "$comment": "Expression grammar is deliberately open at v0.1. The rules engine ADR (ADR-013 or a follow-up) will formalize the operator set; until then the AIM accepts any structured expression object so runtime can validate it against a compiled rule model.",
+      "type": "object"
+    },
+
+    "metadata": {
+      "type": "object",
+      "required": ["id", "name", "description", "sourceBim", "provenance", "status", "createdAt", "lastUpdatedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^aim\\.[a-z0-9][a-z0-9-]*$" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "sourceBim": {
+          "type": "object",
+          "required": ["id", "version", "contentHash"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string", "pattern": "^bim\\.[a-z0-9][a-z0-9-]*$" },
+            "version": { "$ref": "#/$defs/semverString" },
+            "contentHash": {
+              "type": "string",
+              "description": "Content hash of the source BIM. Use 'sha256:<hex>' or 'sha256:__pending__' during Phase 0 seed authoring.",
+              "pattern": "^sha256:([0-9a-f]{64}|__pending__)$"
+            }
+          }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "status": { "type": "string", "enum": ["draft", "in-review", "approved", "deprecated"] },
+        "createdAt": { "$ref": "#/$defs/isoDate" },
+        "lastUpdatedAt": { "$ref": "#/$defs/isoDate" }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["translation", "translatedAt", "reviewedBy"],
+      "additionalProperties": false,
+      "properties": {
+        "translation": {
+          "type": "string",
+          "enum": ["hand-authored", "ai-generated", "ai-generated-human-edited", "power-user-edited"]
+        },
+        "translatedBy": { "type": ["string", "null"] },
+        "translatedAt": { "$ref": "#/$defs/isoDate" },
+        "modelAdapter": { "type": ["string", "null"] },
+        "modelId": { "type": ["string", "null"] },
+        "promptTemplateId": { "type": ["string", "null"] },
+        "promptTemplateVersion": { "type": ["string", "null"] },
+        "reviewedBy": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    },
+
+    "role": {
+      "type": "object",
+      "required": ["id", "description", "trust"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" },
+        "sourcePersonaName": { "type": "string" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "trust": { "type": "string", "enum": ["external", "internal-staff", "system"] },
+        "canAssumeAny": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+        },
+        "approvalAuthority": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxRiskBand": { "type": "string" }
+          }
+        },
+        "readOnly": { "type": "boolean" }
+      }
+    },
+
+    "enumDef": {
+      "type": "object",
+      "required": ["id", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^enum\\.[a-z][a-z0-9-]*$" },
+        "description": { "type": "string" },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "value": { "$ref": "#/$defs/nonEmptyString" },
+              "label": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        }
+      }
+    },
+
+    "entity": {
+      "type": "object",
+      "required": ["id", "name", "description", "keys", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^entity\\.[a-z][a-z0-9-]*$" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "sourceBusinessObject": { "type": "string" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "keys": {
+          "type": "object",
+          "required": ["primary"],
+          "additionalProperties": false,
+          "properties": {
+            "primary": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/field" }
+        }
+      }
+    },
+
+    "field": {
+      "type": "object",
+      "required": ["id", "type", "required", "classification"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9]*$" },
+        "type": {
+          "type": "string",
+          "enum": ["string", "text", "integer", "decimal", "boolean", "date", "datetime", "enum", "reference", "file", "money"]
+        },
+        "format": { "type": "string" },
+        "required": { "type": "boolean" },
+        "classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "pii", "sensitive-pii"]
+        },
+        "immutable": { "type": "boolean" },
+        "enumRef": {
+          "type": ["string", "null"],
+          "pattern": "^enum\\.[a-z][a-z0-9-]*$"
+        },
+        "allowedValues": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "referenceTo": {
+          "type": "string",
+          "pattern": "^(entity|role)\\.[a-z][a-z0-9-]*$"
+        },
+        "cardinality": {
+          "type": "string",
+          "enum": ["one", "zero-or-one", "many", "one-or-many"]
+        },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "minLength": { "type": "integer", "minimum": 0 },
+        "maxLength": { "type": "integer", "minimum": 1 },
+        "pattern": { "type": "string" },
+        "currency": { "type": "string" },
+        "stateMachineRef": {
+          "type": "string",
+          "pattern": "^state-machine\\.[a-z][a-z0-9-]*$"
+        },
+        "visibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allowRoles": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+            },
+            "denyRoles": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+            }
+          }
+        },
+        "derivedFrom": {
+          "type": "string",
+          "pattern": "^rule\\.[a-z][a-z0-9-]*$"
+        },
+        "requiredWhenStatusIn": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "note": { "type": "string" },
+        "sourceBimAttribute": { "type": "string" }
+      }
+    },
+
+    "stateMachine": {
+      "type": "object",
+      "required": ["id", "entityRef", "fieldRef", "initialState", "states", "transitions"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^state-machine\\.[a-z][a-z0-9-]*$" },
+        "entityRef": { "type": "string", "pattern": "^entity\\.[a-z][a-z0-9-]*$" },
+        "fieldRef": { "$ref": "#/$defs/nonEmptyString" },
+        "sourceBimSection": { "type": "string" },
+        "initialState": { "$ref": "#/$defs/nonEmptyString" },
+        "terminalStates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/nonEmptyString" },
+              "sourceBimStage": { "type": "string" },
+              "assignedTo": {
+                "type": "string",
+                "pattern": "^role\\.[a-z][a-z0-9-]*$"
+              },
+              "terminal": { "type": "boolean" }
+            }
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/transition" }
+        },
+        "retention": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "draftMaxAgeDays": { "type": "integer", "minimum": 0 },
+            "draftExpiryEffect": { "type": "string", "enum": ["auto-discard", "auto-archive", "none"] },
+            "terminalRecordsImmutable": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "transition": {
+      "type": "object",
+      "required": ["id", "from", "to", "triggeredBy", "allowedRoles"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "from": { "$ref": "#/$defs/nonEmptyString" },
+        "to": { "$ref": "#/$defs/nonEmptyString" },
+        "triggeredBy": {
+          "type": "string",
+          "pattern": "^operation\\.[a-z][a-z0-9.-]*:v[0-9]+$"
+        },
+        "allowedRoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+        },
+        "guard": { "$ref": "#/$defs/guardRef" },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" }
+        }
+      }
+    },
+
+    "guardRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^rule\\.[a-z][a-z0-9-]*$"
+        },
+        "any": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expression" }
+        },
+        "all": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expression" }
+        }
+      }
+    },
+
+    "effect": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "policy"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "assign-reviewer" },
+            "policy": { "type": "string", "enum": ["round-robin", "workload-based", "manual"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "eventType"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "emit-trace" },
+            "eventType": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "template"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "notify-applicant" },
+            "template": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "field"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "require-field" },
+            "field": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "create-customer-record" }
+          }
+        }
+      ]
+    },
+
+    "rule": {
+      "type": "object",
+      "required": ["id", "kind", "description", "priority"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^rule\\.[a-z][a-z0-9-]*$" },
+        "sourceBimRuleId": { "type": ["string", "null"] },
+        "kind": {
+          "type": "string",
+          "enum": ["field-requirement", "field-constraint", "field-visibility", "document-requirement", "derived-field", "transition-guard"]
+        },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "when": { "$ref": "#/$defs/expression" },
+        "condition": { "$ref": "#/$defs/expression" },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["when", "then"],
+            "additionalProperties": false,
+            "properties": {
+              "when": { "$ref": "#/$defs/expression" },
+              "then": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/ruleAction" }
+              }
+            }
+          }
+        },
+        "then": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ruleAction" }
+        },
+        "target": {
+          "type": "object",
+          "required": ["entity", "field"],
+          "additionalProperties": false,
+          "properties": {
+            "entity": { "type": "string", "pattern": "^entity\\.[a-z][a-z0-9-]*$" },
+            "field": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["entity", "field"],
+            "additionalProperties": false,
+            "properties": {
+              "entity": { "type": "string", "pattern": "^entity\\.[a-z][a-z0-9-]*$" },
+              "field": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "allowRoles": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+        },
+        "denyRoles": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+        }
+      }
+    },
+
+    "ruleAction": {
+      "type": "object",
+      "required": ["action"],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["require-field", "match-pattern", "require-documents", "set-value", "reject-if-empty"]
+        },
+        "entity": { "type": "string", "pattern": "^entity\\.[a-z][a-z0-9-]*$" },
+        "field": { "type": "string" },
+        "pattern": { "type": "string" },
+        "label": { "type": "string" },
+        "types": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "value": {}
+      }
+    },
+
+    "operation": {
+      "type": "object",
+      "required": ["id", "version", "allowedRoles", "idempotency", "sideEffects", "auditEvent"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^operation\\.[a-z][a-z0-9.-]*$"
+        },
+        "version": { "type": "string", "pattern": "^[0-9]+$" },
+        "sourceBimAction": { "type": ["string", "null"] },
+        "allowedRoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" }
+        },
+        "idempotency": {
+          "type": "object",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["client-key", "pure", "content-hash", "state-guarded"]
+            },
+            "keyField": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        "guard": { "$ref": "#/$defs/guardRef" },
+        "sideEffects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "auditEvent": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+
+    "documentsPolicy": {
+      "type": "object",
+      "required": ["acceptedMimeTypes", "maxSizeBytesPerFile", "requiredByRuleRef"],
+      "additionalProperties": false,
+      "properties": {
+        "acceptedMimeTypes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "maxSizeBytesPerFile": { "type": "integer", "minimum": 1 },
+        "maxTotalSizeBytesPerCase": { "type": "integer", "minimum": 1 },
+        "requiredByRuleRef": {
+          "type": "string",
+          "pattern": "^rule\\.[a-z][a-z0-9-]*$"
+        }
+      }
+    },
+
+    "nonFunctionalItem": {
+      "type": "object",
+      "required": ["concern"],
+      "additionalProperties": false,
+      "properties": {
+        "concern": {
+          "type": "string",
+          "enum": ["performance", "reliability", "security", "privacy", "auditability", "accessibility"]
+        },
+        "sourceBimConcern": { "type": "string" },
+        "budget": {
+          "$comment": "Per-concern budget metrics. Shape is intentionally open at v0.1; concrete keys will be constrained per concern in v0.2 alongside the ObservabilityModel schema.",
+          "type": "object"
+        },
+        "policy": {
+          "$comment": "Per-concern policy settings. Shape is intentionally open at v0.1; concrete keys will be constrained per concern in v0.2 alongside the SecurityModel schema.",
+          "type": "object"
+        }
+      }
+    },
+
+    "traceabilityEntry": {
+      "type": "object",
+      "required": ["aim", "bim"],
+      "additionalProperties": false,
+      "properties": {
+        "aim": { "$ref": "#/$defs/nonEmptyString" },
+        "bim": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+
+    "openIssue": {
+      "type": "object",
+      "required": ["id", "description", "resolution"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^issue\\.[a-z][a-z0-9-]*$" },
+        "linkedBimQuestion": {
+          "type": "string",
+          "pattern": "^q\\.[a-z][a-z0-9-]*$"
+        },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "resolution": {
+          "type": "string",
+          "enum": ["deferred", "provisional", "resolved", "rejected"]
+        }
+      }
+    }
+  }
+}
