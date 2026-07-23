@@ -12,8 +12,8 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 | ADR | Status | Owner |
 |---|---|---|
 | [ADR-011 BIM vs AIM boundary](../adr/ADR-011-bim-aim-boundary.md) | ✅ Accepted | Dilip |
-| [ADR-012 CAM versioning](../adr/ADR-012-canonical-application-model-versioning.md) | ⏳ Proposed | _TBD_ |
-| [ADR-013 Runtime engine contract](../adr/ADR-013-runtime-engine-contract.md) | ⏳ Proposed | _TBD_ |
+| [ADR-012 CAM versioning](../adr/ADR-012-canonical-application-model-versioning.md) | ✅ Accepted | Dilip |
+| [ADR-013 Runtime engine contract](../adr/ADR-013-runtime-engine-contract.md) | ✅ Accepted | Dilip |
 | [ADR-014 Technology adapter contract](../adr/ADR-014-technology-adapter-contract.md) | ⏳ Proposed | _TBD_ |
 | [ADR-015 AI model adapter layer](../adr/ADR-015-ai-model-adapter-layer.md) | ⏳ Proposed | _TBD_ |
 | [ADR-016 Deployment packaging](../adr/ADR-016-deployment-packaging.md) | ⏳ Proposed | _TBD_ |
