@@ -1,0 +1,903 @@
+{
+  "$comment": "Hand-authored CAM v0.1 for the Customer Onboarding reference scenario. In normal flow the deterministic CAM generator produces this from aim.json — the hand-authored version is a Phase 0 seed and the round-trip validation gate for the CAM v0.1 schema. Envelope + 10 sub-models per ADR-012; IntegrationModel and DeploymentModel are v0.1 stubs (Phase 3 / Phase 5). Rules use the canonical AST at $defs.expression in the schema. Field-level visibility from the AIM is realized here in SecurityModel.fieldAbacPolicies, not on the field definitions.",
+
+  "envelopeVersion": "1.0",
+
+  "metadata": {
+    "camId": "cam.customer-onboarding",
+    "camReleaseTag": "onboarding@2026.07",
+    "appId": "customer-onboarding",
+    "tenantId": null,
+    "environment": "dev",
+    "generatedAt": "2026-07-23T00:00:00Z",
+    "sourceAim": {
+      "id": "aim.customer-onboarding",
+      "version": "0.1.0",
+      "contentHash": "sha256:__pending__"
+    },
+    "generator": {
+      "name": "hand-authored",
+      "version": "0.1.0"
+    }
+  },
+
+  "InteractionModel": {
+    "version": "0.1.0",
+    "screens": [
+      {
+        "id": "screen.applicant-basic-info",
+        "title": "Tell us about you",
+        "kind": "form",
+        "assignedTo": ["role.applicant"],
+        "sections": [
+          {
+            "id": "section.applicant.identity",
+            "title": "Identity",
+            "fields": [
+              { "id": "field-binding.applicant.legal-name", "entityRef": "entity.customer", "fieldRef": "legalName", "label": "Legal name", "control": "text", "order": 10 },
+              { "id": "field-binding.applicant.customer-type", "entityRef": "entity.customer", "fieldRef": "customerType", "label": "You are applying as", "control": "select", "order": 20 },
+              { "id": "field-binding.applicant.country", "entityRef": "entity.customer", "fieldRef": "country", "label": "Country", "control": "select", "order": 30 },
+              { "id": "field-binding.applicant.dob", "entityRef": "entity.customer", "fieldRef": "dateOfBirthOrIncorporation", "label": "Date of birth or incorporation", "control": "date", "order": 40 },
+              { "id": "field-binding.applicant.tax-id", "entityRef": "entity.customer", "fieldRef": "taxIdentifier", "label": "Tax identifier", "helpText": "PAN (India), SSN/ITIN (US individual), EIN (US business)", "control": "text", "order": 50 }
+            ]
+          },
+          {
+            "id": "section.applicant.contact",
+            "title": "How can we reach you?",
+            "fields": [
+              { "id": "field-binding.applicant.email", "entityRef": "entity.customer", "fieldRef": "contactEmail", "label": "Email address", "control": "email", "order": 10 },
+              { "id": "field-binding.applicant.phone", "entityRef": "entity.customer", "fieldRef": "contactPhone", "label": "Phone number", "control": "phone", "order": 20 }
+            ]
+          },
+          {
+            "id": "section.applicant.finance",
+            "title": "Financial profile",
+            "fields": [
+              { "id": "field-binding.applicant.income", "entityRef": "entity.customer", "fieldRef": "declaredAnnualIncomeOrTurnover", "label": "Declared annual income or turnover", "control": "money", "order": 10 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screen.applicant-documents",
+        "title": "Upload your documents",
+        "kind": "form",
+        "assignedTo": ["role.applicant"],
+        "sections": [
+          {
+            "id": "section.applicant.documents",
+            "title": "Supporting documents",
+            "fields": [
+              { "id": "field-binding.document.file", "entityRef": "entity.document", "fieldRef": "storageRef", "label": "File", "control": "file-upload", "order": 10 },
+              { "id": "field-binding.document.type", "entityRef": "entity.document", "fieldRef": "documentType", "label": "Document type", "control": "select", "order": 20 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screen.applicant-review",
+        "title": "Review and submit",
+        "kind": "review",
+        "assignedTo": ["role.applicant"],
+        "sections": [
+          {
+            "id": "section.applicant.review-summary",
+            "title": "Summary",
+            "fields": [
+              { "id": "field-binding.review.legal-name", "entityRef": "entity.customer", "fieldRef": "legalName", "label": "Legal name", "control": "readonly", "order": 10 },
+              { "id": "field-binding.review.customer-type", "entityRef": "entity.customer", "fieldRef": "customerType", "label": "Customer type", "control": "readonly", "order": 20 },
+              { "id": "field-binding.review.country", "entityRef": "entity.customer", "fieldRef": "country", "label": "Country", "control": "readonly", "order": 30 },
+              { "id": "field-binding.review.tax-id", "entityRef": "entity.customer", "fieldRef": "taxIdentifier", "label": "Tax identifier", "control": "readonly", "order": 40 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "screen.reviewer-case-detail",
+        "title": "Case detail",
+        "kind": "detail",
+        "assignedTo": ["role.reviewer", "role.manager", "role.auditor"],
+        "sections": [
+          {
+            "id": "section.reviewer.case-summary",
+            "title": "Case",
+            "fields": [
+              { "id": "field-binding.reviewer.case-reference", "entityRef": "entity.onboarding-case", "fieldRef": "caseReference", "label": "Case reference", "control": "readonly", "order": 10 },
+              { "id": "field-binding.reviewer.status", "entityRef": "entity.onboarding-case", "fieldRef": "status", "label": "Status", "control": "readonly", "order": 20 },
+              { "id": "field-binding.reviewer.risk-score", "entityRef": "entity.onboarding-case", "fieldRef": "riskScore", "label": "Risk score", "control": "readonly", "order": 30 },
+              { "id": "field-binding.reviewer.risk-band", "entityRef": "entity.onboarding-case", "fieldRef": "riskBand", "label": "Risk band", "control": "readonly", "order": 40 },
+              { "id": "field-binding.reviewer.decision-reason", "entityRef": "entity.onboarding-case", "fieldRef": "decisionReason", "label": "Decision reason", "control": "textarea", "order": 50, "requiredWhenRef": "rule.decision-reason-required" }
+            ]
+          }
+        ]
+      }
+    ],
+    "messages": {
+      "template.request-more-info": "Additional information is needed to continue reviewing your onboarding application.",
+      "template.approved": "Your onboarding application has been approved.",
+      "template.rejected": "Your onboarding application has been declined."
+    }
+  },
+
+  "WorkflowModel": {
+    "version": "0.1.0",
+    "stateMachines": [
+      {
+        "id": "state-machine.case-lifecycle",
+        "entityRef": "entity.onboarding-case",
+        "fieldRef": "status",
+        "initialState": "draft",
+        "terminalStates": ["approved", "rejected"],
+        "states": [
+          { "id": "draft", "assignedTo": "role.applicant" },
+          { "id": "submitted", "assignedTo": "role.reviewer" },
+          { "id": "in-review", "assignedTo": "role.reviewer" },
+          { "id": "waiting-for-applicant", "assignedTo": "role.applicant" },
+          { "id": "pending-manager-approval", "assignedTo": "role.manager" },
+          { "id": "approved", "terminal": true },
+          { "id": "rejected", "terminal": true }
+        ],
+        "transitions": [
+          {
+            "id": "t.submit",
+            "from": "draft",
+            "to": "submitted",
+            "triggeredBy": "operation.customer.submit-onboarding:v1",
+            "allowedRoles": ["role.applicant"],
+            "guardRef": "rule.submission-completeness",
+            "effects": [
+              { "type": "assign-reviewer", "policy": "round-robin" },
+              { "type": "emit-trace", "eventKindRef": "event.case.submitted" }
+            ]
+          },
+          {
+            "id": "t.begin-review",
+            "from": "submitted",
+            "to": "in-review",
+            "triggeredBy": "operation.case.begin-review:v1",
+            "allowedRoles": ["role.reviewer"],
+            "effects": [
+              { "type": "emit-trace", "eventKindRef": "event.case.review-started" }
+            ]
+          },
+          {
+            "id": "t.request-info",
+            "from": "in-review",
+            "to": "waiting-for-applicant",
+            "triggeredBy": "operation.case.request-more-info:v1",
+            "allowedRoles": ["role.reviewer"],
+            "effects": [
+              { "type": "notify", "template": "template.request-more-info", "recipients": ["role.applicant"] },
+              { "type": "emit-trace", "eventKindRef": "event.case.info-requested" }
+            ]
+          },
+          {
+            "id": "t.resubmit",
+            "from": "waiting-for-applicant",
+            "to": "in-review",
+            "triggeredBy": "operation.customer.submit-onboarding:v1",
+            "allowedRoles": ["role.applicant"],
+            "effects": [
+              { "type": "emit-trace", "eventKindRef": "event.case.resubmitted" }
+            ]
+          },
+          {
+            "id": "t.send-to-manager",
+            "from": "in-review",
+            "to": "pending-manager-approval",
+            "triggeredBy": "operation.case.send-for-manager-approval:v1",
+            "allowedRoles": ["role.reviewer"],
+            "guardRef": "rule.high-risk-needs-manager",
+            "effects": [
+              { "type": "emit-trace", "eventKindRef": "event.case.escalated" }
+            ]
+          },
+          {
+            "id": "t.reviewer-approve",
+            "from": "in-review",
+            "to": "approved",
+            "triggeredBy": "operation.case.approve:v1",
+            "allowedRoles": ["role.reviewer"],
+            "guardRef": "rule.reviewer-approval-limit",
+            "effects": [
+              { "type": "require-field", "field": "decisionReason" },
+              { "type": "dispatch-operation", "operationRef": "operation.customer.create-record:v1" },
+              { "type": "notify", "template": "template.approved", "recipients": ["role.applicant"] },
+              { "type": "emit-trace", "eventKindRef": "event.case.approved" }
+            ]
+          },
+          {
+            "id": "t.manager-approve",
+            "from": "pending-manager-approval",
+            "to": "approved",
+            "triggeredBy": "operation.case.approve:v1",
+            "allowedRoles": ["role.manager"],
+            "effects": [
+              { "type": "require-field", "field": "decisionReason" },
+              { "type": "dispatch-operation", "operationRef": "operation.customer.create-record:v1" },
+              { "type": "notify", "template": "template.approved", "recipients": ["role.applicant"] },
+              { "type": "emit-trace", "eventKindRef": "event.case.approved" }
+            ]
+          },
+          {
+            "id": "t.reviewer-reject",
+            "from": "in-review",
+            "to": "rejected",
+            "triggeredBy": "operation.case.reject:v1",
+            "allowedRoles": ["role.reviewer"],
+            "effects": [
+              { "type": "require-field", "field": "decisionReason" },
+              { "type": "notify", "template": "template.rejected", "recipients": ["role.applicant"] },
+              { "type": "emit-trace", "eventKindRef": "event.case.rejected" }
+            ]
+          },
+          {
+            "id": "t.manager-reject",
+            "from": "pending-manager-approval",
+            "to": "rejected",
+            "triggeredBy": "operation.case.reject:v1",
+            "allowedRoles": ["role.manager"],
+            "effects": [
+              { "type": "require-field", "field": "decisionReason" },
+              { "type": "notify", "template": "template.rejected", "recipients": ["role.applicant"] },
+              { "type": "emit-trace", "eventKindRef": "event.case.rejected" }
+            ]
+          },
+          {
+            "id": "t.send-back",
+            "from": "pending-manager-approval",
+            "to": "in-review",
+            "triggeredBy": "operation.case.return-to-reviewer:v1",
+            "allowedRoles": ["role.manager"],
+            "effects": [
+              { "type": "emit-trace", "eventKindRef": "event.case.returned-to-reviewer" }
+            ]
+          }
+        ],
+        "retention": {
+          "draftMaxAgeDays": 30,
+          "draftExpiryEffect": "auto-discard",
+          "terminalRecordsImmutable": true
+        }
+      }
+    ],
+    "assignmentPolicies": [
+      {
+        "id": "assignment.reviewer.round-robin",
+        "targetRole": "role.reviewer",
+        "policy": "round-robin"
+      }
+    ]
+  },
+
+  "RuleModel": {
+    "version": "0.1.0",
+    "rules": [
+      {
+        "id": "rule.tax-id-required",
+        "kind": "field-requirement",
+        "description": "A tax identifier is required for every customer.",
+        "priority": 100,
+        "sourceAimRuleId": "rule.tax-id-required",
+        "when": { "op": "always" },
+        "then": [
+          { "action": "require-field", "entity": "entity.customer", "field": "taxIdentifier" }
+        ]
+      },
+      {
+        "id": "rule.tax-id-format",
+        "kind": "field-constraint",
+        "description": "Validates the tax identifier format based on country and customer type.",
+        "priority": 90,
+        "sourceAimRuleId": "rule.tax-id-format",
+        "cases": [
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "IN" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "individual" } }
+              ]
+            },
+            "then": [
+              { "action": "match-pattern", "entity": "entity.customer", "field": "taxIdentifier", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$", "label": "PAN" }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "IN" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "business" } }
+              ]
+            },
+            "then": [
+              { "action": "match-pattern", "entity": "entity.customer", "field": "taxIdentifier", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$", "label": "PAN (business primary)" }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "US" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "individual" } }
+              ]
+            },
+            "then": [
+              { "action": "match-pattern", "entity": "entity.customer", "field": "taxIdentifier", "pattern": "^(\\d{3}-\\d{2}-\\d{4}|\\d{9})$", "label": "SSN or ITIN" }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "US" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "business" } }
+              ]
+            },
+            "then": [
+              { "action": "match-pattern", "entity": "entity.customer", "field": "taxIdentifier", "pattern": "^\\d{2}-\\d{7}$", "label": "EIN" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rule.documents-by-country",
+        "kind": "document-requirement",
+        "description": "Required document set depends on country and customer type.",
+        "priority": 80,
+        "sourceAimRuleId": "rule.documents-by-country",
+        "cases": [
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "IN" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "individual" } }
+              ]
+            },
+            "then": [
+              { "action": "require-documents", "documentTypes": ["pan-card", "proof-of-address"] }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "IN" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "business" } }
+              ]
+            },
+            "then": [
+              { "action": "require-documents", "documentTypes": ["pan-card", "gst-certificate", "certificate-of-incorporation"] }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "US" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "individual" } }
+              ]
+            },
+            "then": [
+              { "action": "require-documents", "documentTypes": ["government-photo-id", "proof-of-address"] }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "eq", "left": { "path": "entity.customer.country" }, "right": { "literal": "US" } },
+                { "op": "eq", "left": { "path": "entity.customer.customerType" }, "right": { "literal": "business" } }
+              ]
+            },
+            "then": [
+              { "action": "require-documents", "documentTypes": ["certificate-of-incorporation"] }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rule.derive-risk-band",
+        "kind": "derived-field",
+        "description": "Maps the numeric risk score into a low/medium/high band.",
+        "priority": 70,
+        "target": { "entity": "entity.onboarding-case", "field": "riskBand" },
+        "cases": [
+          {
+            "when": { "op": "lte", "left": { "path": "entity.onboarding-case.riskScore" }, "right": { "literal": 3 } },
+            "then": [
+              { "action": "set-value", "value": "low" }
+            ]
+          },
+          {
+            "when": {
+              "op": "and",
+              "operands": [
+                { "op": "gt", "left": { "path": "entity.onboarding-case.riskScore" }, "right": { "literal": 3 } },
+                { "op": "lte", "left": { "path": "entity.onboarding-case.riskScore" }, "right": { "literal": 7 } }
+              ]
+            },
+            "then": [
+              { "action": "set-value", "value": "medium" }
+            ]
+          },
+          {
+            "when": { "op": "gt", "left": { "path": "entity.onboarding-case.riskScore" }, "right": { "literal": 7 } },
+            "then": [
+              { "action": "set-value", "value": "high" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rule.high-risk-needs-manager",
+        "kind": "transition-guard",
+        "description": "Only high-risk cases may enter pending-manager-approval.",
+        "priority": 60,
+        "sourceAimRuleId": "rule.high-risk-needs-manager",
+        "condition": { "op": "eq", "left": { "path": "entity.onboarding-case.riskBand" }, "right": { "literal": "high" } }
+      },
+      {
+        "id": "rule.reviewer-approval-limit",
+        "kind": "transition-guard",
+        "description": "A reviewer may not approve a high-risk case directly; it must go via a manager.",
+        "priority": 60,
+        "sourceAimRuleId": "rule.reviewer-approval-limit",
+        "condition": {
+          "op": "not",
+          "operand": { "op": "eq", "left": { "path": "entity.onboarding-case.riskBand" }, "right": { "literal": "high" } }
+        }
+      },
+      {
+        "id": "rule.field-visibility-risk",
+        "kind": "field-visibility",
+        "description": "Internal risk fields are visible only to staff roles.",
+        "priority": 50,
+        "sourceAimRuleId": "rule.field-visibility-risk",
+        "when": { "op": "always" },
+        "targets": [
+          { "entity": "entity.onboarding-case", "field": "riskScore" },
+          { "entity": "entity.onboarding-case", "field": "riskBand" }
+        ],
+        "then": [
+          {
+            "action": "set-visibility",
+            "visibility": {
+              "allowRoles": ["role.reviewer", "role.manager", "role.auditor"],
+              "denyRoles": ["role.applicant"]
+            }
+          }
+        ]
+      },
+      {
+        "id": "rule.field-visibility-assigned-reviewer",
+        "kind": "field-visibility",
+        "description": "Assigned reviewer identity is visible to manager and auditor only.",
+        "priority": 50,
+        "sourceAimRuleId": "rule.field-visibility-assigned-reviewer",
+        "when": { "op": "always" },
+        "targets": [
+          { "entity": "entity.onboarding-case", "field": "assignedReviewerRef" }
+        ],
+        "then": [
+          {
+            "action": "set-visibility",
+            "visibility": {
+              "allowRoles": ["role.manager", "role.auditor"],
+              "denyRoles": ["role.applicant", "role.reviewer"]
+            }
+          }
+        ]
+      },
+      {
+        "id": "rule.decision-reason-required",
+        "kind": "field-requirement",
+        "description": "A non-empty decision reason must accompany any approval or rejection.",
+        "priority": 100,
+        "sourceAimRuleId": "rule.decision-reason-required",
+        "when": {
+          "op": "in",
+          "value": { "path": "entity.onboarding-case.status" },
+          "list": [
+            { "literal": "approved" },
+            { "literal": "rejected" }
+          ]
+        },
+        "then": [
+          { "action": "require-field", "entity": "entity.onboarding-case", "field": "decisionReason" },
+          { "action": "reject-if-empty", "entity": "entity.onboarding-case", "field": "decisionReason" }
+        ]
+      },
+      {
+        "id": "rule.submission-completeness",
+        "kind": "transition-guard",
+        "description": "A case may be submitted only when all required fields and documents are present. In v0.1 this is 'always true' at the rule layer — the Platform Kernel enforces completeness intrinsically from DataModel required-field flags and from rule.documents-by-country before invoking the guarded transition.",
+        "priority": 100,
+        "sourceAimRuleId": "rule.submission-completeness",
+        "condition": { "op": "always" }
+      }
+    ]
+  },
+
+  "OperationModel": {
+    "version": "0.1.0",
+    "operations": [
+      {
+        "id": "operation.customer.save-draft",
+        "version": "1",
+        "allowedRoles": ["role.applicant"],
+        "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+        "retryPolicy": { "kind": "exponential", "maxAttempts": 3, "backoffMs": 200 },
+        "sideEffects": ["persist"],
+        "auditEvent": "customer.draft-saved",
+        "adapter": { "kind": "data", "binding": "entity.customer" }
+      },
+      {
+        "id": "operation.customer.submit-onboarding",
+        "version": "1",
+        "allowedRoles": ["role.applicant"],
+        "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+        "sideEffects": ["persist", "transition:t.submit", "transition:t.resubmit"],
+        "auditEvent": "customer.submitted",
+        "adapter": { "kind": "internal", "binding": "kernel:state-transition" }
+      },
+      {
+        "id": "operation.customer.validate-tax-id",
+        "version": "1",
+        "allowedRoles": ["role.applicant", "role.reviewer"],
+        "idempotency": { "kind": "pure" },
+        "guardRef": "rule.tax-id-format",
+        "sideEffects": [],
+        "auditEvent": "customer.tax-id-validated",
+        "adapter": { "kind": "internal", "binding": "kernel:pure-eval" }
+      },
+      {
+        "id": "operation.customer.create-record",
+        "version": "1",
+        "allowedRoles": ["role.reviewer", "role.manager"],
+        "idempotency": { "kind": "state-guarded" },
+        "sideEffects": ["persist"],
+        "auditEvent": "customer.record-created",
+        "adapter": { "kind": "data", "binding": "entity.customer" }
+      },
+      {
+        "id": "operation.document.upload",
+        "version": "1",
+        "allowedRoles": ["role.applicant"],
+        "idempotency": { "kind": "content-hash", "keyField": "sha256" },
+        "retryPolicy": { "kind": "exponential", "maxAttempts": 5, "backoffMs": 500 },
+        "sideEffects": ["persist", "object-store:put"],
+        "auditEvent": "document.uploaded",
+        "adapter": { "kind": "storage", "binding": "object-store:default" }
+      },
+      {
+        "id": "operation.case.begin-review",
+        "version": "1",
+        "allowedRoles": ["role.reviewer"],
+        "idempotency": { "kind": "state-guarded" },
+        "sideEffects": ["transition:t.begin-review"],
+        "auditEvent": "case.review-started",
+        "adapter": { "kind": "internal", "binding": "kernel:state-transition" }
+      },
+      {
+        "id": "operation.case.request-more-info",
+        "version": "1",
+        "allowedRoles": ["role.reviewer"],
+        "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+        "sideEffects": ["transition:t.request-info", "notify"],
+        "auditEvent": "case.info-requested",
+        "adapter": { "kind": "notification", "binding": "notification:default" }
+      },
+      {
+        "id": "operation.case.send-for-manager-approval",
+        "version": "1",
+        "allowedRoles": ["role.reviewer"],
+        "idempotency": { "kind": "state-guarded" },
+        "guardRef": "rule.high-risk-needs-manager",
+        "sideEffects": ["transition:t.send-to-manager"],
+        "auditEvent": "case.escalated",
+        "adapter": { "kind": "internal", "binding": "kernel:state-transition" }
+      },
+      {
+        "id": "operation.case.approve",
+        "version": "1",
+        "allowedRoles": ["role.reviewer", "role.manager"],
+        "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+        "sideEffects": ["transition:t.reviewer-approve", "transition:t.manager-approve", "dispatch:operation.customer.create-record"],
+        "auditEvent": "case.approved",
+        "adapter": { "kind": "internal", "binding": "kernel:state-transition" },
+        "errorTaxonomy": [
+          { "code": "GUARD_FAILED_HIGH_RISK", "retryable": false, "userMessage": "High-risk cases must be approved by a manager." },
+          { "code": "DECISION_REASON_MISSING", "retryable": false, "userMessage": "A decision reason is required to approve this case." }
+        ]
+      },
+      {
+        "id": "operation.case.reject",
+        "version": "1",
+        "allowedRoles": ["role.reviewer", "role.manager"],
+        "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+        "sideEffects": ["transition:t.reviewer-reject", "transition:t.manager-reject"],
+        "auditEvent": "case.rejected",
+        "adapter": { "kind": "internal", "binding": "kernel:state-transition" },
+        "errorTaxonomy": [
+          { "code": "DECISION_REASON_MISSING", "retryable": false, "userMessage": "A decision reason is required to reject this case." }
+        ]
+      },
+      {
+        "id": "operation.case.return-to-reviewer",
+        "version": "1",
+        "allowedRoles": ["role.manager"],
+        "idempotency": { "kind": "state-guarded" },
+        "sideEffects": ["transition:t.send-back"],
+        "auditEvent": "case.returned-to-reviewer",
+        "adapter": { "kind": "internal", "binding": "kernel:state-transition" }
+      }
+    ]
+  },
+
+  "DataModel": {
+    "version": "0.1.0",
+    "entities": [
+      {
+        "id": "entity.customer",
+        "name": "Customer",
+        "description": "The person or business the bank is being asked to onboard.",
+        "keys": { "primary": ["id"] },
+        "fields": [
+          { "id": "id", "type": "string", "format": "uuid", "required": true, "classification": "internal", "immutable": true },
+          { "id": "legalName", "type": "string", "required": true, "classification": "pii", "maxLength": 200 },
+          { "id": "customerType", "type": "enum", "enumRef": "enum.customer-type", "required": true, "classification": "internal" },
+          { "id": "country", "type": "enum", "enumRef": "enum.country", "required": true, "classification": "internal" },
+          { "id": "dateOfBirthOrIncorporation", "type": "date", "required": true, "classification": "pii" },
+          { "id": "taxIdentifier", "type": "string", "required": false, "classification": "sensitive-pii" },
+          { "id": "declaredAnnualIncomeOrTurnover", "type": "money", "required": false, "classification": "confidential", "currency": "USD" },
+          { "id": "contactEmail", "type": "string", "format": "email", "required": true, "classification": "pii" },
+          { "id": "contactPhone", "type": "string", "format": "phone-e164", "required": false, "classification": "pii" }
+        ]
+      },
+      {
+        "id": "entity.onboarding-case",
+        "name": "OnboardingCase",
+        "description": "One attempt by an applicant to become a customer.",
+        "keys": { "primary": ["id"] },
+        "fields": [
+          { "id": "id", "type": "string", "format": "uuid", "required": true, "classification": "internal", "immutable": true },
+          { "id": "caseReference", "type": "string", "required": true, "classification": "internal", "pattern": "^CO-[0-9]{4}-[0-9]{6}$" },
+          { "id": "customerRef", "type": "reference", "referenceTo": "entity.customer", "cardinality": "one", "required": true, "classification": "internal" },
+          { "id": "status", "type": "enum", "enumRef": "enum.case-status", "required": true, "classification": "internal", "stateMachineRef": "state-machine.case-lifecycle" },
+          { "id": "assignedReviewerRef", "type": "reference", "referenceTo": "role.reviewer", "cardinality": "zero-or-one", "required": false, "classification": "internal" },
+          { "id": "riskScore", "type": "integer", "required": false, "classification": "confidential", "minimum": 0, "maximum": 10 },
+          { "id": "riskBand", "type": "enum", "enumRef": "enum.risk-band", "required": false, "classification": "confidential", "derivedFromRuleRef": "rule.derive-risk-band" },
+          { "id": "decisionReason", "type": "text", "required": false, "classification": "internal", "maxLength": 2000 },
+          { "id": "createdAt", "type": "datetime", "required": true, "classification": "internal", "immutable": true },
+          { "id": "updatedAt", "type": "datetime", "required": true, "classification": "internal" }
+        ]
+      },
+      {
+        "id": "entity.document",
+        "name": "Document",
+        "description": "A file attached to an onboarding case.",
+        "keys": { "primary": ["id"] },
+        "fields": [
+          { "id": "id", "type": "string", "format": "uuid", "required": true, "classification": "internal", "immutable": true },
+          { "id": "caseRef", "type": "reference", "referenceTo": "entity.onboarding-case", "cardinality": "one", "required": true, "classification": "internal" },
+          { "id": "documentType", "type": "enum", "enumRef": "enum.document-type", "required": true, "classification": "internal" },
+          { "id": "storageRef", "type": "string", "required": true, "classification": "confidential" },
+          { "id": "mimeType", "type": "string", "required": true, "classification": "internal", "allowedValues": ["application/pdf", "image/jpeg", "image/png"] },
+          { "id": "sizeBytes", "type": "integer", "required": true, "classification": "internal", "minimum": 1, "maximum": 10485760 },
+          { "id": "uploadedAt", "type": "datetime", "required": true, "classification": "internal", "immutable": true },
+          { "id": "verifiedByReviewerRef", "type": "reference", "referenceTo": "role.reviewer", "cardinality": "zero-or-one", "required": false, "classification": "internal" }
+        ]
+      }
+    ],
+    "enums": [
+      {
+        "id": "enum.customer-type",
+        "values": [
+          { "value": "individual", "label": "Individual" },
+          { "value": "business", "label": "Business" }
+        ]
+      },
+      {
+        "id": "enum.country",
+        "description": "Phase 1 launch countries. Expansion is a new CAM major version.",
+        "values": [
+          { "value": "IN", "label": "India" },
+          { "value": "US", "label": "United States" }
+        ]
+      },
+      {
+        "id": "enum.risk-band",
+        "closedStrictly": true,
+        "values": [
+          { "value": "low", "label": "Low" },
+          { "value": "medium", "label": "Medium" },
+          { "value": "high", "label": "High" }
+        ]
+      },
+      {
+        "id": "enum.case-status",
+        "closedStrictly": true,
+        "values": [
+          { "value": "draft", "label": "Draft" },
+          { "value": "submitted", "label": "Submitted" },
+          { "value": "in-review", "label": "In review" },
+          { "value": "waiting-for-applicant", "label": "Waiting for applicant" },
+          { "value": "pending-manager-approval", "label": "Pending manager approval" },
+          { "value": "approved", "label": "Approved" },
+          { "value": "rejected", "label": "Rejected" }
+        ]
+      },
+      {
+        "id": "enum.document-type",
+        "closedStrictly": true,
+        "values": [
+          { "value": "pan-card", "label": "PAN card" },
+          { "value": "gst-certificate", "label": "GST certificate" },
+          { "value": "certificate-of-incorporation", "label": "Certificate of incorporation" },
+          { "value": "passport", "label": "Passport" },
+          { "value": "government-photo-id", "label": "Government-issued photo ID" },
+          { "value": "proof-of-address", "label": "Proof of address" },
+          { "value": "proof-of-employment", "label": "Proof of employment or income" }
+        ]
+      }
+    ],
+    "indexes": [
+      { "id": "index.customer.tax-identifier", "entityRef": "entity.customer", "fields": ["taxIdentifier"], "unique": false },
+      { "id": "index.case.reference", "entityRef": "entity.onboarding-case", "fields": ["caseReference"], "unique": true },
+      { "id": "index.case.status", "entityRef": "entity.onboarding-case", "fields": ["status"], "unique": false },
+      { "id": "index.document.case-ref", "entityRef": "entity.document", "fields": ["caseRef"], "unique": false }
+    ]
+  },
+
+  "IntegrationModel": {
+    "version": "0.1.0",
+    "endpoints": [],
+    "messageFormats": []
+  },
+
+  "SecurityModel": {
+    "version": "0.1.0",
+    "roles": [
+      { "id": "role.applicant", "description": "External user completing an application.", "trust": "external" },
+      { "id": "role.reviewer", "description": "Internal operations analyst reviewing submitted applications.", "trust": "internal-staff" },
+      { "id": "role.manager", "description": "Internal senior operations manager approving high-risk cases.", "trust": "internal-staff" },
+      { "id": "role.auditor", "description": "Read-only role for internal audit and compliance.", "trust": "internal-staff", "readOnly": true }
+    ],
+    "permissions": [
+      { "roleId": "role.applicant", "resource": "entity.customer", "actions": ["read", "create", "update"] },
+      { "roleId": "role.applicant", "resource": "entity.onboarding-case", "actions": ["read", "create", "update"] },
+      { "roleId": "role.applicant", "resource": "entity.document", "actions": ["read", "create"] },
+      { "roleId": "role.reviewer", "resource": "entity.customer", "actions": ["read", "update"] },
+      { "roleId": "role.reviewer", "resource": "entity.onboarding-case", "actions": ["read", "update", "approve", "reject"] },
+      { "roleId": "role.reviewer", "resource": "entity.document", "actions": ["read", "update"] },
+      { "roleId": "role.manager", "resource": "entity.onboarding-case", "actions": ["read", "update", "approve", "reject"] },
+      { "roleId": "role.auditor", "resource": "entity.customer", "actions": ["read"] },
+      { "roleId": "role.auditor", "resource": "entity.onboarding-case", "actions": ["read"] },
+      { "roleId": "role.auditor", "resource": "entity.document", "actions": ["read"] }
+    ],
+    "fieldAbacPolicies": [
+      {
+        "id": "abac.case.risk-fields",
+        "description": "Risk score and risk band are internal-only.",
+        "targets": [
+          { "entity": "entity.onboarding-case", "field": "riskScore" },
+          { "entity": "entity.onboarding-case", "field": "riskBand" }
+        ],
+        "allowRoles": ["role.reviewer", "role.manager", "role.auditor"],
+        "denyRoles": ["role.applicant"]
+      },
+      {
+        "id": "abac.case.assigned-reviewer",
+        "description": "Assigned reviewer identity is visible to manager and auditor only.",
+        "targets": [
+          { "entity": "entity.onboarding-case", "field": "assignedReviewerRef" }
+        ],
+        "allowRoles": ["role.manager", "role.auditor"],
+        "denyRoles": ["role.applicant", "role.reviewer"]
+      },
+      {
+        "id": "abac.customer.tax-identifier",
+        "description": "Tax identifier is sensitive-pii; masked in UI for all roles by data-classification policy, but only visible at all to staff roles.",
+        "targets": [
+          { "entity": "entity.customer", "field": "taxIdentifier" }
+        ],
+        "allowRoles": ["role.applicant", "role.reviewer", "role.manager", "role.auditor"]
+      }
+    ],
+    "dataClassifications": [
+      { "classification": "public", "policy": { "maskInLogs": false, "maskInUi": "none", "encryptionAtRest": "none", "encryptionInTransit": "TLS-1.3" } },
+      { "classification": "internal", "policy": { "maskInLogs": false, "maskInUi": "none", "encryptionAtRest": "AES-256", "encryptionInTransit": "TLS-1.3" } },
+      { "classification": "confidential", "policy": { "maskInLogs": true, "maskInUi": "none", "encryptionAtRest": "AES-256", "encryptionInTransit": "TLS-1.3" } },
+      { "classification": "pii", "policy": { "maskInLogs": true, "maskInUi": "none", "encryptionAtRest": "AES-256", "encryptionInTransit": "TLS-1.3" } },
+      { "classification": "sensitive-pii", "policy": { "maskInLogs": true, "maskInUi": "last4-only", "encryptionAtRest": "AES-256", "encryptionInTransit": "TLS-1.3" } }
+    ]
+  },
+
+  "ObservabilityModel": {
+    "version": "0.1.0",
+    "traceEventKinds": [
+      { "id": "event.case.submitted", "description": "Applicant has submitted a case.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.review-started", "description": "A reviewer has begun reviewing a submitted case.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.info-requested", "description": "Reviewer has requested additional information.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.resubmitted", "description": "Applicant has resubmitted after providing more info.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.escalated", "description": "Case escalated to manager approval.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.approved", "description": "Case has been approved.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.rejected", "description": "Case has been rejected.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.case.returned-to-reviewer", "description": "Manager has returned a case to a reviewer.", "producedBy": ["runtime-workflow"], "retentionDays": 2555 },
+      { "id": "event.field.rendered", "description": "A field was rendered on a screen — used by the Trace Viewer to answer 'why did this field appear?'", "producedBy": ["runtime-interaction-ui"], "retentionDays": 90 },
+      { "id": "event.rule.fired", "description": "A rule matched and fired — used by the Trace Viewer to answer 'why did this rule fire?'", "producedBy": ["runtime-rules"], "retentionDays": 365 }
+    ],
+    "metrics": [
+      { "id": "metric.case.submissions", "kind": "counter", "unit": "cases", "dimensions": ["country", "customerType"] },
+      { "id": "metric.case.approval-latency", "kind": "histogram", "unit": "ms", "dimensions": ["riskBand"] },
+      { "id": "metric.operation.duration", "kind": "histogram", "unit": "ms", "dimensions": ["operationId", "outcome"] }
+    ],
+    "auditLog": {
+      "retentionDays": 2555,
+      "storeSensitivePayloads": false
+    }
+  },
+
+  "DeploymentModel": {
+    "version": "0.1.0",
+    "topology": { "mode": "unspecified" },
+    "resources": []
+  },
+
+  "MetadataModel": {
+    "version": "0.1.0",
+    "appId": "customer-onboarding",
+    "appVersion": "0.1.0",
+    "tenantId": null,
+    "tags": {
+      "environment": "dev",
+      "region": "IN",
+      "criticality": "high",
+      "dataResidency": "in-country"
+    },
+    "provenanceChain": [
+      {
+        "stage": "bim",
+        "artifactId": "bim.customer-onboarding",
+        "version": "0.1.0",
+        "contentHash": "sha256:__pending__",
+        "producedAt": "2026-07-23T00:00:00Z",
+        "producedBy": "Dilip",
+        "modelAdapter": null,
+        "modelId": null,
+        "promptTemplateId": null,
+        "promptTemplateVersion": null,
+        "reviewedBy": ["Dilip"]
+      },
+      {
+        "stage": "aim",
+        "artifactId": "aim.customer-onboarding",
+        "version": "0.1.0",
+        "contentHash": "sha256:__pending__",
+        "producedAt": "2026-07-23T00:00:00Z",
+        "producedBy": "hand-authored",
+        "modelAdapter": null,
+        "modelId": null,
+        "promptTemplateId": null,
+        "promptTemplateVersion": null,
+        "reviewedBy": ["Dilip"]
+      },
+      {
+        "stage": "cam",
+        "artifactId": "cam.customer-onboarding",
+        "version": "0.1.0",
+        "contentHash": "sha256:__pending__",
+        "producedAt": "2026-07-23T00:00:00Z",
+        "producedBy": "hand-authored",
+        "modelAdapter": null,
+        "modelId": null,
+        "promptTemplateId": null,
+        "promptTemplateVersion": null,
+        "reviewedBy": ["Dilip"]
+      }
+    ]
+  }
+}

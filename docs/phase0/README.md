@@ -25,7 +25,7 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 |---|---|---|
 | [BIM v0.1](../schemas/bim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
 | [AIM v0.1](../schemas/aim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
-| [CAM v0.1](../schemas/cam.v0.1.schema.json) | ✅ v0.1 published (schema meta-checked; reference `cam.json` pending) | Dilip |
+| [CAM v0.1](../schemas/cam.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
 | Operation Contract v0.1 | ⏳ Not started | _TBD_ |
 | Trace Event v0.1 | ⏳ Not started | _TBD_ |
 
@@ -44,9 +44,9 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 ### WS-0.4 Reference Scenario Specification (Customer Onboarding)
 
 - [x] BIM v0.1 hand-authored — [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)
-- [x] AIM v0.1 hand-authored — [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json) (schema pending)
-- [ ] CAM v0.1 hand-authored — `examples/customer-onboarding/cam.json`
-- [ ] Round-trip validation script
+- [x] AIM v0.1 hand-authored — [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json) (validated against `aim.v0.1.schema.json`)
+- [x] CAM v0.1 hand-authored — [examples/customer-onboarding/cam.json](../../examples/customer-onboarding/cam.json) (validated against `cam.v0.1.schema.json`)
+- [x] Round-trip validation script — [tools/validate-schemas](../../tools/validate-schemas/)
 
 ### WS-0.5 Tech Stack Decisions
 

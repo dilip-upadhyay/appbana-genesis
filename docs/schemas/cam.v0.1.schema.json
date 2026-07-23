@@ -62,8 +62,8 @@
     "operationId": { "type": "string", "pattern": "^operation\\.[a-z][a-z0-9.-]*$" },
     "operationRef": { "type": "string", "pattern": "^operation\\.[a-z][a-z0-9.-]*:v[0-9]+$" },
     "stateMachineId": { "type": "string", "pattern": "^state-machine\\.[a-z][a-z0-9-]*$" },
-    "screenId": { "type": "string", "pattern": "^screen\\.[a-z][a-z0-9-]*$" },
-    "sectionId": { "type": "string", "pattern": "^section\\.[a-z][a-z0-9-]*$" },
+    "screenId": { "type": "string", "pattern": "^screen\\.[a-z][a-z0-9.-]*$" },
+    "sectionId": { "type": "string", "pattern": "^section\\.[a-z][a-z0-9.-]*$" },
     "eventKindId": { "type": "string", "pattern": "^event\\.[a-z][a-z0-9.-]*$" },
     "metricId": { "type": "string", "pattern": "^metric\\.[a-z][a-z0-9.-]*$" },
 
