@@ -1,0 +1,21 @@
+{
+  "name": "@appbana/validate-schemas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Validates the canonical JSON Schemas in docs/schemas against reference example artifacts. Used by the schema-validate CI job.",
+  "type": "module",
+  "main": "src/validate.mjs",
+  "bin": {
+    "validate-schemas": "src/validate.mjs"
+  },
+  "scripts": {
+    "validate": "node src/validate.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

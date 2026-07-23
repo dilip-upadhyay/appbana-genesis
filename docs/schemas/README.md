@@ -6,11 +6,11 @@ This directory contains versioned JSON Schemas for every canonical artifact in A
 
 | Schema | File | Version | Status |
 |---|---|---|---|
-| Business Intent Model | `business-intent-model.schema.json` | v0.1 | Not started (WS-0.2) |
-| Application Intent Model | `application-intent-model.schema.json` | v0.1 | Not started (WS-0.2) |
-| Canonical Application Model | `canonical-application-model.schema.json` | v0.1 | Not started (WS-0.2) |
-| Operation Contract | `operation-contract.schema.json` | v0.1 | Not started (WS-0.2) |
-| Trace Event | `trace-event.schema.json` | v0.1 | Not started (WS-0.2) |
+| Business Intent Model | [bim.v0.1.schema.json](bim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)) |
+| Application Intent Model | `aim.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
+| Canonical Application Model | `cam.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
+| Operation Contract | `operation-contract.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
+| Trace Event | `trace-event.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
 
 ## Rules
 

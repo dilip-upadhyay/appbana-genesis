@@ -1,0 +1,555 @@
+{
+  "$comment": "Hand-authored AIM v0.1 for the Customer Onboarding reference scenario. This is the canonical, zero-ambiguity Application Intent Model derived from examples/customer-onboarding/bim.json per ADR-011. Every element has a stable id; every reference resolves; every rule is a structured expression. Human-editable only as a Phase 0 seed — in normal flow the AI Normalization/Resolution/Validation pipeline produces this artifact from the BIM. Downstream, a deterministic generator produces the CAM (10 sub-models) from this AIM.",
+
+  "aimVersion": "0.1.0",
+  "schemaVersion": "0.1",
+
+  "metadata": {
+    "id": "aim.customer-onboarding",
+    "name": "Customer Onboarding",
+    "description": "Canonical model for onboarding retail and small-business banking customers, resolved from the Customer Onboarding BIM.",
+    "sourceBim": {
+      "id": "bim.customer-onboarding",
+      "version": "0.1.0",
+      "contentHash": "sha256:__pending__"
+    },
+    "provenance": {
+      "translation": "hand-authored",
+      "translatedBy": "Dilip",
+      "translatedAt": "2026-07-23",
+      "modelAdapter": null,
+      "modelId": null,
+      "promptTemplateId": null,
+      "promptTemplateVersion": null,
+      "reviewedBy": ["Dilip"]
+    },
+    "status": "draft",
+    "createdAt": "2026-07-23",
+    "lastUpdatedAt": "2026-07-23"
+  },
+
+  "roles": [
+    {
+      "id": "role.applicant",
+      "sourcePersonaName": "Applicant",
+      "description": "External user completing an application to become a customer.",
+      "trust": "external",
+      "canAssumeAny": ["role.applicant"]
+    },
+    {
+      "id": "role.reviewer",
+      "sourcePersonaName": "Reviewer",
+      "description": "Internal operations analyst reviewing submitted applications.",
+      "trust": "internal-staff",
+      "approvalAuthority": { "maxRiskBand": "medium" }
+    },
+    {
+      "id": "role.manager",
+      "sourcePersonaName": "Manager",
+      "description": "Internal senior operations manager approving high-risk cases.",
+      "trust": "internal-staff",
+      "approvalAuthority": { "maxRiskBand": "high" }
+    },
+    {
+      "id": "role.auditor",
+      "sourcePersonaName": "Auditor",
+      "description": "Read-only role for internal audit and compliance.",
+      "trust": "internal-staff",
+      "readOnly": true
+    }
+  ],
+
+  "enums": [
+    {
+      "id": "enum.customer-type",
+      "values": [
+        { "value": "individual", "label": "Individual" },
+        { "value": "business", "label": "Business" }
+      ]
+    },
+    {
+      "id": "enum.country",
+      "description": "Phase 1 launch countries. Expansion is a new AIM version.",
+      "values": [
+        { "value": "IN", "label": "India" },
+        { "value": "US", "label": "United States" }
+      ]
+    },
+    {
+      "id": "enum.risk-band",
+      "values": [
+        { "value": "low", "label": "Low" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "high", "label": "High" }
+      ]
+    },
+    {
+      "id": "enum.case-status",
+      "values": [
+        { "value": "draft", "label": "Draft" },
+        { "value": "submitted", "label": "Submitted" },
+        { "value": "in-review", "label": "In review" },
+        { "value": "waiting-for-applicant", "label": "Waiting for applicant" },
+        { "value": "pending-manager-approval", "label": "Pending manager approval" },
+        { "value": "approved", "label": "Approved" },
+        { "value": "rejected", "label": "Rejected" }
+      ]
+    },
+    {
+      "id": "enum.document-type",
+      "values": [
+        { "value": "pan-card", "label": "PAN card" },
+        { "value": "gst-certificate", "label": "GST certificate" },
+        { "value": "certificate-of-incorporation", "label": "Certificate of incorporation" },
+        { "value": "passport", "label": "Passport" },
+        { "value": "government-photo-id", "label": "Government-issued photo ID" },
+        { "value": "proof-of-address", "label": "Proof of address" },
+        { "value": "proof-of-employment", "label": "Proof of employment or income" }
+      ]
+    }
+  ],
+
+  "entities": [
+    {
+      "id": "entity.customer",
+      "name": "Customer",
+      "sourceBusinessObject": "Customer",
+      "description": "The person or business the bank is being asked to onboard.",
+      "keys": { "primary": ["id"] },
+      "fields": [
+        { "id": "id", "type": "string", "format": "uuid", "required": true, "classification": "internal", "immutable": true },
+        { "id": "legalName", "type": "string", "required": true, "classification": "pii", "maxLength": 200, "sourceBimAttribute": "Full name (individuals) or legal name (businesses)" },
+        { "id": "customerType", "type": "enum", "enumRef": "enum.customer-type", "required": true, "classification": "internal" },
+        { "id": "country", "type": "enum", "enumRef": "enum.country", "required": true, "classification": "internal", "sourceBimAttribute": "Country of residence or registration" },
+        { "id": "dateOfBirthOrIncorporation", "type": "date", "required": true, "classification": "pii" },
+        { "id": "taxIdentifier", "type": "string", "required": false, "classification": "sensitive-pii", "note": "Required by rule.tax-id-required; the format is country-and-type specific and enforced by rule.tax-id-format." },
+        { "id": "declaredAnnualIncomeOrTurnover", "type": "money", "currency": "resolved-at-runtime", "required": false, "classification": "confidential" },
+        { "id": "contactEmail", "type": "string", "format": "email", "required": true, "classification": "pii" },
+        { "id": "contactPhone", "type": "string", "format": "phone-e164", "required": false, "classification": "pii" }
+      ]
+    },
+    {
+      "id": "entity.onboarding-case",
+      "name": "OnboardingCase",
+      "sourceBusinessObject": "Onboarding case",
+      "description": "One attempt by an applicant to become a customer.",
+      "keys": { "primary": ["id"] },
+      "fields": [
+        { "id": "id", "type": "string", "format": "uuid", "required": true, "classification": "internal", "immutable": true },
+        { "id": "caseReference", "type": "string", "required": true, "classification": "internal", "pattern": "^CO-[0-9]{4}-[0-9]{6}$", "note": "Human-friendly reference shown to applicant and staff." },
+        { "id": "customerRef", "type": "reference", "referenceTo": "entity.customer", "cardinality": "one", "required": true, "classification": "internal" },
+        { "id": "status", "type": "enum", "enumRef": "enum.case-status", "required": true, "classification": "internal", "stateMachineRef": "state-machine.case-lifecycle" },
+        { "id": "assignedReviewerRef", "type": "reference", "referenceTo": "role.reviewer", "cardinality": "zero-or-one", "required": false, "classification": "internal", "visibility": { "allowRoles": ["role.manager", "role.auditor", "role.reviewer"] } },
+        { "id": "riskScore", "type": "integer", "required": false, "classification": "confidential", "minimum": 0, "maximum": 10, "visibility": { "allowRoles": ["role.reviewer", "role.manager", "role.auditor"] }, "sourceBimAttribute": "Risk score" },
+        { "id": "riskBand", "type": "enum", "enumRef": "enum.risk-band", "required": false, "classification": "confidential", "derivedFrom": "rule.derive-risk-band", "visibility": { "allowRoles": ["role.reviewer", "role.manager", "role.auditor"] } },
+        { "id": "decisionReason", "type": "text", "required": false, "classification": "internal", "maxLength": 2000, "requiredWhenStatusIn": ["approved", "rejected"] },
+        { "id": "createdAt", "type": "datetime", "required": true, "classification": "internal", "immutable": true },
+        { "id": "updatedAt", "type": "datetime", "required": true, "classification": "internal" }
+      ]
+    },
+    {
+      "id": "entity.document",
+      "name": "Document",
+      "sourceBusinessObject": "Document",
+      "description": "A file attached to an onboarding case.",
+      "keys": { "primary": ["id"] },
+      "fields": [
+        { "id": "id", "type": "string", "format": "uuid", "required": true, "classification": "internal", "immutable": true },
+        { "id": "caseRef", "type": "reference", "referenceTo": "entity.onboarding-case", "cardinality": "one", "required": true, "classification": "internal" },
+        { "id": "documentType", "type": "enum", "enumRef": "enum.document-type", "required": true, "classification": "internal" },
+        { "id": "storageRef", "type": "string", "required": true, "classification": "confidential", "note": "Opaque handle into the platform object store. Not a URL." },
+        { "id": "mimeType", "type": "enum", "enumRef": null, "allowedValues": ["application/pdf", "image/jpeg", "image/png"], "required": true, "classification": "internal" },
+        { "id": "sizeBytes", "type": "integer", "required": true, "classification": "internal", "minimum": 1, "maximum": 10485760 },
+        { "id": "uploadedAt", "type": "datetime", "required": true, "classification": "internal", "immutable": true },
+        { "id": "verifiedByReviewerRef", "type": "reference", "referenceTo": "role.reviewer", "cardinality": "zero-or-one", "required": false, "classification": "internal" }
+      ]
+    }
+  ],
+
+  "stateMachines": [
+    {
+      "id": "state-machine.case-lifecycle",
+      "entityRef": "entity.onboarding-case",
+      "fieldRef": "status",
+      "sourceBimSection": "workflow",
+      "initialState": "draft",
+      "terminalStates": ["approved", "rejected"],
+      "states": [
+        { "id": "draft", "sourceBimStage": "Draft", "assignedTo": "role.applicant" },
+        { "id": "submitted", "sourceBimStage": "Submitted", "assignedTo": "role.reviewer" },
+        { "id": "in-review", "sourceBimStage": "In review", "assignedTo": "role.reviewer" },
+        { "id": "waiting-for-applicant", "sourceBimStage": "Waiting for applicant", "assignedTo": "role.applicant" },
+        { "id": "pending-manager-approval", "sourceBimStage": "Pending manager approval", "assignedTo": "role.manager" },
+        { "id": "approved", "sourceBimStage": "Approved", "terminal": true },
+        { "id": "rejected", "sourceBimStage": "Rejected", "terminal": true }
+      ],
+      "transitions": [
+        {
+          "id": "t.submit",
+          "from": "draft",
+          "to": "submitted",
+          "triggeredBy": "operation.customer.submit-onboarding:v1",
+          "allowedRoles": ["role.applicant"],
+          "guard": { "ref": "rule.submission-completeness" },
+          "effects": [
+            { "type": "assign-reviewer", "policy": "round-robin" },
+            { "type": "emit-trace", "eventType": "case.submitted" }
+          ]
+        },
+        {
+          "id": "t.begin-review",
+          "from": "submitted",
+          "to": "in-review",
+          "triggeredBy": "operation.case.begin-review:v1",
+          "allowedRoles": ["role.reviewer"],
+          "effects": [{ "type": "emit-trace", "eventType": "case.review-started" }]
+        },
+        {
+          "id": "t.request-info",
+          "from": "in-review",
+          "to": "waiting-for-applicant",
+          "triggeredBy": "operation.case.request-more-info:v1",
+          "allowedRoles": ["role.reviewer"],
+          "effects": [
+            { "type": "notify-applicant", "template": "template.request-more-info" },
+            { "type": "emit-trace", "eventType": "case.info-requested" }
+          ]
+        },
+        {
+          "id": "t.resubmit",
+          "from": "waiting-for-applicant",
+          "to": "in-review",
+          "triggeredBy": "operation.customer.submit-onboarding:v1",
+          "allowedRoles": ["role.applicant"],
+          "effects": [{ "type": "emit-trace", "eventType": "case.resubmitted" }]
+        },
+        {
+          "id": "t.send-to-manager",
+          "from": "in-review",
+          "to": "pending-manager-approval",
+          "triggeredBy": "operation.case.send-for-manager-approval:v1",
+          "allowedRoles": ["role.reviewer"],
+          "guard": { "ref": "rule.high-risk-needs-manager" },
+          "effects": [{ "type": "emit-trace", "eventType": "case.escalated" }]
+        },
+        {
+          "id": "t.reviewer-approve",
+          "from": "in-review",
+          "to": "approved",
+          "triggeredBy": "operation.case.approve:v1",
+          "allowedRoles": ["role.reviewer"],
+          "guard": { "ref": "rule.reviewer-approval-limit" },
+          "effects": [
+            { "type": "require-field", "field": "decisionReason" },
+            { "type": "create-customer-record" },
+            { "type": "emit-trace", "eventType": "case.approved" }
+          ]
+        },
+        {
+          "id": "t.manager-approve",
+          "from": "pending-manager-approval",
+          "to": "approved",
+          "triggeredBy": "operation.case.approve:v1",
+          "allowedRoles": ["role.manager"],
+          "effects": [
+            { "type": "require-field", "field": "decisionReason" },
+            { "type": "create-customer-record" },
+            { "type": "emit-trace", "eventType": "case.approved" }
+          ]
+        },
+        {
+          "id": "t.reviewer-reject",
+          "from": "in-review",
+          "to": "rejected",
+          "triggeredBy": "operation.case.reject:v1",
+          "allowedRoles": ["role.reviewer"],
+          "effects": [
+            { "type": "require-field", "field": "decisionReason" },
+            { "type": "emit-trace", "eventType": "case.rejected" }
+          ]
+        },
+        {
+          "id": "t.manager-reject",
+          "from": "pending-manager-approval",
+          "to": "rejected",
+          "triggeredBy": "operation.case.reject:v1",
+          "allowedRoles": ["role.manager"],
+          "effects": [
+            { "type": "require-field", "field": "decisionReason" },
+            { "type": "emit-trace", "eventType": "case.rejected" }
+          ]
+        },
+        {
+          "id": "t.send-back",
+          "from": "pending-manager-approval",
+          "to": "in-review",
+          "triggeredBy": "operation.case.return-to-reviewer:v1",
+          "allowedRoles": ["role.manager"],
+          "effects": [{ "type": "emit-trace", "eventType": "case.returned-to-reviewer" }]
+        }
+      ],
+      "retention": {
+        "draftMaxAgeDays": 30,
+        "draftExpiryEffect": "auto-discard",
+        "terminalRecordsImmutable": true
+      }
+    }
+  ],
+
+  "rules": [
+    {
+      "id": "rule.tax-id-required",
+      "sourceBimRuleId": "rule.tax-id-required",
+      "kind": "field-requirement",
+      "description": "A tax identifier is required for every customer; the specific identifier depends on country and customer type.",
+      "when": {
+        "always": true
+      },
+      "then": [
+        { "action": "require-field", "entity": "entity.customer", "field": "taxIdentifier" }
+      ],
+      "priority": 100
+    },
+    {
+      "id": "rule.tax-id-format",
+      "sourceBimRuleId": "rule.tax-id-required",
+      "kind": "field-constraint",
+      "description": "Validates the tax identifier format based on country and customer type.",
+      "cases": [
+        { "when": { "all": [ { "eq": ["entity.customer.country", "IN"] }, { "eq": ["entity.customer.customerType", "individual"] } ] }, "then": [ { "action": "match-pattern", "field": "entity.customer.taxIdentifier", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$", "label": "PAN" } ] },
+        { "when": { "all": [ { "eq": ["entity.customer.country", "IN"] }, { "eq": ["entity.customer.customerType", "business"] } ] }, "then": [ { "action": "match-pattern", "field": "entity.customer.taxIdentifier", "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$", "label": "PAN (business primary)" } ] },
+        { "when": { "all": [ { "eq": ["entity.customer.country", "US"] }, { "eq": ["entity.customer.customerType", "individual"] } ] }, "then": [ { "action": "match-pattern", "field": "entity.customer.taxIdentifier", "pattern": "^(\\d{3}-\\d{2}-\\d{4}|\\d{9})$", "label": "SSN or ITIN" } ] },
+        { "when": { "all": [ { "eq": ["entity.customer.country", "US"] }, { "eq": ["entity.customer.customerType", "business"] } ] }, "then": [ { "action": "match-pattern", "field": "entity.customer.taxIdentifier", "pattern": "^\\d{2}-\\d{7}$", "label": "EIN" } ] }
+      ],
+      "priority": 90
+    },
+    {
+      "id": "rule.documents-by-country",
+      "sourceBimRuleId": "rule.documents-by-country",
+      "kind": "document-requirement",
+      "description": "Required document set depends on country and customer type.",
+      "cases": [
+        { "when": { "all": [ { "eq": ["entity.customer.country", "IN"] }, { "eq": ["entity.customer.customerType", "individual"] } ] }, "then": [ { "action": "require-documents", "types": ["pan-card", "proof-of-address"] } ] },
+        { "when": { "all": [ { "eq": ["entity.customer.country", "IN"] }, { "eq": ["entity.customer.customerType", "business"] } ] }, "then": [ { "action": "require-documents", "types": ["pan-card", "gst-certificate", "certificate-of-incorporation"] } ] },
+        { "when": { "all": [ { "eq": ["entity.customer.country", "US"] }, { "eq": ["entity.customer.customerType", "individual"] } ] }, "then": [ { "action": "require-documents", "types": ["government-photo-id", "proof-of-address"] } ] },
+        { "when": { "all": [ { "eq": ["entity.customer.country", "US"] }, { "eq": ["entity.customer.customerType", "business"] } ] }, "then": [ { "action": "require-documents", "types": ["certificate-of-incorporation"] } ] }
+      ],
+      "priority": 80
+    },
+    {
+      "id": "rule.derive-risk-band",
+      "sourceBimRuleId": null,
+      "kind": "derived-field",
+      "description": "Maps the numeric risk score into a low/medium/high band. Derived, not stored.",
+      "target": { "entity": "entity.onboarding-case", "field": "riskBand" },
+      "cases": [
+        { "when": { "lte": ["entity.onboarding-case.riskScore", 3] }, "then": [ { "action": "set-value", "value": "low" } ] },
+        { "when": { "and": [ { "gt": ["entity.onboarding-case.riskScore", 3] }, { "lte": ["entity.onboarding-case.riskScore", 7] } ] }, "then": [ { "action": "set-value", "value": "medium" } ] },
+        { "when": { "gt": ["entity.onboarding-case.riskScore", 7] }, "then": [ { "action": "set-value", "value": "high" } ] }
+      ],
+      "priority": 70
+    },
+    {
+      "id": "rule.high-risk-needs-manager",
+      "sourceBimRuleId": "rule.high-risk-needs-manager",
+      "kind": "transition-guard",
+      "description": "Only high-risk cases may enter pending-manager-approval; low/medium may be approved directly by a reviewer.",
+      "condition": { "eq": ["entity.onboarding-case.riskBand", "high"] },
+      "priority": 60
+    },
+    {
+      "id": "rule.reviewer-approval-limit",
+      "sourceBimRuleId": "rule.high-risk-needs-manager",
+      "kind": "transition-guard",
+      "description": "A reviewer may not approve a high-risk case directly; it must go via a manager.",
+      "condition": { "not": { "eq": ["entity.onboarding-case.riskBand", "high"] } },
+      "priority": 60
+    },
+    {
+      "id": "rule.field-visibility-risk",
+      "sourceBimRuleId": "rule.field-visibility-by-role",
+      "kind": "field-visibility",
+      "description": "Internal risk fields are visible only to staff roles.",
+      "targets": [
+        { "entity": "entity.onboarding-case", "field": "riskScore" },
+        { "entity": "entity.onboarding-case", "field": "riskBand" }
+      ],
+      "allowRoles": ["role.reviewer", "role.manager", "role.auditor"],
+      "denyRoles": ["role.applicant"],
+      "priority": 50
+    },
+    {
+      "id": "rule.field-visibility-assigned-reviewer",
+      "sourceBimRuleId": "rule.field-visibility-by-role",
+      "kind": "field-visibility",
+      "description": "Assigned reviewer identity is visible to manager and auditor only.",
+      "targets": [{ "entity": "entity.onboarding-case", "field": "assignedReviewerRef" }],
+      "allowRoles": ["role.manager", "role.auditor"],
+      "denyRoles": ["role.applicant", "role.reviewer"],
+      "priority": 50
+    },
+    {
+      "id": "rule.decision-reason-required",
+      "sourceBimRuleId": "rule.decision-reason-required",
+      "kind": "field-requirement",
+      "description": "A non-empty decision reason must accompany any approval or rejection.",
+      "when": { "in": ["entity.onboarding-case.status", ["approved", "rejected"]] },
+      "then": [
+        { "action": "require-field", "entity": "entity.onboarding-case", "field": "decisionReason" },
+        { "action": "reject-if-empty", "entity": "entity.onboarding-case", "field": "decisionReason" }
+      ],
+      "priority": 100
+    },
+    {
+      "id": "rule.submission-completeness",
+      "sourceBimRuleId": null,
+      "kind": "transition-guard",
+      "description": "A case may be submitted only when all required customer fields and required documents are present.",
+      "condition": {
+        "all": [
+          { "op": "all-required-fields-set", "entity": "entity.customer" },
+          { "op": "all-required-documents-uploaded", "entity": "entity.onboarding-case" }
+        ]
+      },
+      "priority": 100
+    }
+  ],
+
+  "operations": [
+    {
+      "id": "operation.customer.save-draft",
+      "version": "1",
+      "sourceBimAction": "Save draft",
+      "allowedRoles": ["role.applicant"],
+      "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+      "sideEffects": ["persist"],
+      "auditEvent": "customer.draft-saved"
+    },
+    {
+      "id": "operation.customer.submit-onboarding",
+      "version": "1",
+      "sourceBimAction": "Submit application",
+      "allowedRoles": ["role.applicant"],
+      "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+      "guard": { "ref": "rule.submission-completeness" },
+      "sideEffects": ["persist", "transition:t.submit", "transition:t.resubmit"],
+      "auditEvent": "customer.submitted"
+    },
+    {
+      "id": "operation.customer.validate-tax-id",
+      "version": "1",
+      "sourceBimAction": null,
+      "allowedRoles": ["role.applicant", "role.reviewer"],
+      "idempotency": { "kind": "pure" },
+      "sideEffects": [],
+      "guard": { "ref": "rule.tax-id-format" },
+      "auditEvent": "customer.tax-id-validated"
+    },
+    {
+      "id": "operation.document.upload",
+      "version": "1",
+      "sourceBimAction": "Upload document",
+      "allowedRoles": ["role.applicant"],
+      "idempotency": { "kind": "content-hash", "keyField": "sha256" },
+      "sideEffects": ["persist", "object-store:put"],
+      "auditEvent": "document.uploaded"
+    },
+    {
+      "id": "operation.case.begin-review",
+      "version": "1",
+      "sourceBimAction": null,
+      "allowedRoles": ["role.reviewer"],
+      "idempotency": { "kind": "state-guarded" },
+      "sideEffects": ["transition:t.begin-review"],
+      "auditEvent": "case.review-started"
+    },
+    {
+      "id": "operation.case.request-more-info",
+      "version": "1",
+      "sourceBimAction": "Request more information",
+      "allowedRoles": ["role.reviewer"],
+      "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+      "sideEffects": ["transition:t.request-info", "notify"],
+      "auditEvent": "case.info-requested"
+    },
+    {
+      "id": "operation.case.send-for-manager-approval",
+      "version": "1",
+      "sourceBimAction": "Send for manager approval",
+      "allowedRoles": ["role.reviewer"],
+      "idempotency": { "kind": "state-guarded" },
+      "guard": { "ref": "rule.high-risk-needs-manager" },
+      "sideEffects": ["transition:t.send-to-manager"],
+      "auditEvent": "case.escalated"
+    },
+    {
+      "id": "operation.case.approve",
+      "version": "1",
+      "sourceBimAction": "Approve",
+      "allowedRoles": ["role.reviewer", "role.manager"],
+      "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+      "guard": { "any": [{ "ref": "rule.reviewer-approval-limit" }, { "role-is": "role.manager" }] },
+      "sideEffects": ["transition:t.reviewer-approve", "transition:t.manager-approve", "create-customer-record"],
+      "auditEvent": "case.approved"
+    },
+    {
+      "id": "operation.case.reject",
+      "version": "1",
+      "sourceBimAction": "Reject",
+      "allowedRoles": ["role.reviewer", "role.manager"],
+      "idempotency": { "kind": "client-key", "keyField": "clientRequestId" },
+      "sideEffects": ["transition:t.reviewer-reject", "transition:t.manager-reject"],
+      "auditEvent": "case.rejected"
+    },
+    {
+      "id": "operation.case.return-to-reviewer",
+      "version": "1",
+      "sourceBimAction": null,
+      "allowedRoles": ["role.manager"],
+      "idempotency": { "kind": "state-guarded" },
+      "sideEffects": ["transition:t.send-back"],
+      "auditEvent": "case.returned-to-reviewer"
+    }
+  ],
+
+  "documents": {
+    "acceptedMimeTypes": ["application/pdf", "image/jpeg", "image/png"],
+    "maxSizeBytesPerFile": 10485760,
+    "maxTotalSizeBytesPerCase": 52428800,
+    "requiredByRuleRef": "rule.documents-by-country"
+  },
+
+  "nonFunctional": [
+    { "concern": "performance", "sourceBimConcern": "Speed", "budget": { "p95FormRenderMs": 300, "p95OperationMs": 800 } },
+    { "concern": "reliability", "sourceBimConcern": "Reliability", "budget": { "draftAutosaveIntervalSeconds": 5, "targetMonthlyAvailability": "99.5%" } },
+    { "concern": "security", "sourceBimConcern": "Security", "policy": { "fieldAbac": true, "documentEncryptionAtRest": "AES-256", "documentEncryptionInTransit": "TLS-1.2+" } },
+    { "concern": "privacy", "sourceBimConcern": "Privacy", "policy": { "piiFieldsRedactedInLogs": true, "sensitivePiiMaskingInUi": "last4-only" } },
+    { "concern": "auditability", "sourceBimConcern": "Auditability", "policy": { "traceRetentionDays": 2555, "explainWhyFieldVisible": true, "explainWhyRuleFired": true } },
+    { "concern": "accessibility", "sourceBimConcern": "Accessibility", "policy": { "wcagLevel": "AA", "wcagVersion": "2.2" } }
+  ],
+
+  "traceability": [
+    { "aim": "role.applicant", "bim": "persona:Applicant" },
+    { "aim": "role.reviewer", "bim": "persona:Reviewer" },
+    { "aim": "role.manager", "bim": "persona:Manager" },
+    { "aim": "role.auditor", "bim": "persona:Auditor" },
+    { "aim": "entity.customer", "bim": "businessObject:Customer" },
+    { "aim": "entity.onboarding-case", "bim": "businessObject:Onboarding case" },
+    { "aim": "entity.document", "bim": "businessObject:Document" },
+    { "aim": "state-machine.case-lifecycle", "bim": "workflow" },
+    { "aim": "rule.tax-id-required", "bim": "rule.tax-id-required" },
+    { "aim": "rule.tax-id-format", "bim": "rule.tax-id-required" },
+    { "aim": "rule.documents-by-country", "bim": "rule.documents-by-country" },
+    { "aim": "rule.high-risk-needs-manager", "bim": "rule.high-risk-needs-manager" },
+    { "aim": "rule.reviewer-approval-limit", "bim": "rule.high-risk-needs-manager" },
+    { "aim": "rule.field-visibility-risk", "bim": "rule.field-visibility-by-role" },
+    { "aim": "rule.field-visibility-assigned-reviewer", "bim": "rule.field-visibility-by-role" },
+    { "aim": "rule.decision-reason-required", "bim": "rule.decision-reason-required" }
+  ],
+
+  "openIssues": [
+    { "id": "issue.risk-scoring-model", "linkedBimQuestion": "q.risk-scoring-model", "description": "Risk score derivation is out of AIM scope until a scoring model is chosen. For Phase 0/1 the value is assumed to arrive via operation input.", "resolution": "deferred" },
+    { "id": "issue.reviewer-assignment", "linkedBimQuestion": "q.reviewer-assignment", "description": "Round-robin chosen as the placeholder in effect assign-reviewer.", "resolution": "provisional" },
+    { "id": "issue.draft-retention-days", "linkedBimQuestion": "q.draft-retention-days", "description": "30-day retention encoded on the case-lifecycle state machine; will be reconfirmed with Compliance.", "resolution": "provisional" }
+  ]
+}

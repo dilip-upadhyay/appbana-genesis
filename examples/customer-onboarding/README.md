@@ -6,8 +6,8 @@ The first vertical slice for AppBana Genesis. Hand-authored during Phase 0 (WS-0
 
 | File | Description | Owner | Status |
 |---|---|---|---|
-| `bim.json` | Business Intent Model — business-language description of the onboarding capability | _TBD_ | ⏳ Not started |
-| `aim.json` | Application Intent Model — canonical, schema-conformant | _TBD_ | ⏳ Not started |
+| [bim.json](bim.json) | Business Intent Model — business-language description of the onboarding capability | Dilip | ✅ v0.1 hand-authored |
+| [aim.json](aim.json) | Application Intent Model — canonical, schema-conformant | Dilip | ✅ v0.1 hand-authored (schema pending) |
 | `cam.json` | Canonical Application Model — 10 sub-models fully populated | _TBD_ | ⏳ Not started |
 | `README.md` | This file | Dilip | ✅ |
 

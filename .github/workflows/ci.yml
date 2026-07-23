@@ -40,6 +40,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate JSON Schemas (placeholder)
-        run: |
-          echo "Schema validation will be wired up once docs/schemas/*.schema.json is populated."
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Validate JSON Schemas against reference artifacts
+        run: pnpm validate:schemas

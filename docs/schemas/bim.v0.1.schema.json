@@ -1,0 +1,444 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.appbana.dev/bim/v0.1",
+  "title": "Business Intent Model v0.1",
+  "description": "The Business Intent Model (BIM) captures what the business wants, in business language. It is human-authorable, may be partial, and is allowed to contain ambiguity that the AI translation pipeline resolves into the Application Intent Model (AIM). See ADR-011 for the full BIM vs AIM contract. This is a v0.1 draft schema; expect additive minor bumps as the reference scenarios grow.",
+  "type": "object",
+  "required": [
+    "bimVersion",
+    "metadata",
+    "capability",
+    "personas",
+    "businessObjects",
+    "workflow",
+    "businessRules",
+    "actions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": {
+      "type": "string",
+      "title": "Authoring comment",
+      "description": "Optional free-text authoring comment. Ignored by the platform; useful for humans reading the raw JSON."
+    },
+    "bimVersion": {
+      "$ref": "#/$defs/semverString",
+      "title": "BIM document version",
+      "description": "Semantic version of this BIM document. Independent of the BIM schema version. Bumped when the business intent changes."
+    },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "changeHistory": {
+      "type": "array",
+      "title": "Change history",
+      "description": "Ordered log of meaningful edits to this BIM, with the reason for each change. Most recent last is recommended but not enforced.",
+      "items": { "$ref": "#/$defs/changeEntry" }
+    },
+    "capability": { "$ref": "#/$defs/capability" },
+    "personas": {
+      "type": "array",
+      "title": "Personas",
+      "description": "Named business actors involved with the capability. Business names, not canonical role IDs.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/persona" }
+    },
+    "businessObjects": {
+      "type": "array",
+      "title": "Business objects",
+      "description": "The things the business talks about (customer, case, document...). Attributes are described in business language; typing is deferred to the AIM.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/businessObject" }
+    },
+    "workflow": { "$ref": "#/$defs/workflow" },
+    "businessRules": {
+      "type": "array",
+      "title": "Business rules",
+      "description": "Business policies stated in prose, optionally illustrated with examples. Formalization into rule expressions happens in the AIM.",
+      "items": { "$ref": "#/$defs/businessRule" }
+    },
+    "actions": {
+      "type": "array",
+      "title": "Actions",
+      "description": "Verbs the personas perform against the capability. These become semantic operations in the AIM.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "documents": { "$ref": "#/$defs/documents" },
+    "nonFunctional": {
+      "type": "array",
+      "title": "Non-functional expectations",
+      "description": "Soft expectations expressed in business language ('should be fast', 'must be secure'). Resolved to concrete budgets/policies in the AIM.",
+      "items": { "$ref": "#/$defs/nonFunctionalItem" }
+    },
+    "openQuestions": {
+      "type": "array",
+      "title": "Open questions",
+      "description": "Unresolved questions the clarification agent (or a human) needs to answer before the BIM can be translated cleanly.",
+      "items": { "$ref": "#/$defs/openQuestion" }
+    },
+    "attachments": {
+      "type": "array",
+      "title": "Attachments",
+      "description": "References to external artifacts (transcripts, screenshots, sample forms) that provide additional context.",
+      "items": { "$ref": "#/$defs/attachment" }
+    }
+  },
+
+  "$defs": {
+    "semverString": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$",
+      "description": "Semantic version string (MAJOR.MINOR.PATCH), optionally with a pre-release suffix."
+    },
+
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Calendar date in YYYY-MM-DD form."
+    },
+
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "metadata": {
+      "type": "object",
+      "title": "Metadata",
+      "description": "Descriptive information about this BIM document.",
+      "required": ["id", "name", "shortDescription", "primaryOutcome", "createdAt", "lastUpdatedAt", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^bim\\.[a-z0-9][a-z0-9-]*$",
+          "title": "BIM identifier",
+          "description": "Stable identifier for this BIM. Must start with 'bim.' followed by a lowercase kebab-case slug."
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyString",
+          "title": "Capability name",
+          "description": "Human-friendly name of the capability, in business language."
+        },
+        "shortDescription": {
+          "$ref": "#/$defs/nonEmptyString",
+          "title": "Short description",
+          "description": "One or two sentences describing what this capability does for the business."
+        },
+        "industry": {
+          "type": "string",
+          "title": "Industry",
+          "description": "Target industry or vertical for this capability."
+        },
+        "primaryOutcome": {
+          "$ref": "#/$defs/nonEmptyString",
+          "title": "Primary outcome",
+          "description": "The single most important business outcome delivered when the capability runs successfully."
+        },
+        "businessOwner": {
+          "type": "string",
+          "title": "Business owner",
+          "description": "The role or person accountable for this capability from a business perspective."
+        },
+        "authoredBy": {
+          "type": "string",
+          "title": "Authored by",
+          "description": "Who currently owns editing this BIM document."
+        },
+        "createdAt": { "$ref": "#/$defs/isoDate", "title": "Created date" },
+        "lastUpdatedAt": { "$ref": "#/$defs/isoDate", "title": "Last updated date" },
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+          "title": "Authoring language",
+          "description": "BCP-47-style language tag for the prose in this BIM (e.g., 'en', 'en-US', 'fr')."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "in-review", "approved", "deprecated"],
+          "title": "Status",
+          "description": "Editorial status of this BIM document."
+        }
+      }
+    },
+
+    "changeEntry": {
+      "type": "object",
+      "required": ["version", "date", "author", "summary"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/$defs/semverString" },
+        "date": { "$ref": "#/$defs/isoDate" },
+        "author": { "$ref": "#/$defs/nonEmptyString" },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "What changed, in one or two sentences."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why the change was made. Recommended for any non-cosmetic edit."
+        }
+      }
+    },
+
+    "capability": {
+      "type": "object",
+      "title": "Capability",
+      "description": "The core capability the BIM describes.",
+      "required": ["statement"],
+      "additionalProperties": false,
+      "properties": {
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "One-paragraph statement of what the capability does, in the customer's own words."
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "included": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmptyString" },
+              "description": "What is in scope for this version of the capability."
+            },
+            "excluded": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmptyString" },
+              "description": "What is explicitly out of scope. Helpful for the AI to avoid over-reaching."
+            }
+          }
+        },
+        "successMetrics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "description": "How the business will know the capability is working. Stated in business terms; formal SLIs come later."
+        }
+      }
+    },
+
+    "persona": {
+      "type": "object",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Business name of the persona (e.g., 'Bank Officer'). Canonicalization to role IDs happens in the AIM."
+        },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "goals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "typicalActions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    },
+
+    "businessObject": {
+      "type": "object",
+      "required": ["name", "description", "attributes"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "attributes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/businessAttribute" }
+        }
+      }
+    },
+
+    "businessAttribute": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "The attribute described in business language. Formal typing is deferred to the AIM."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the business considers this attribute mandatory. Ambiguity is allowed and can be refined during clarification."
+        },
+        "allowedValues": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "description": "Enumerated business-language values, when the business already knows them."
+        },
+        "note": {
+          "type": "string",
+          "description": "Free-form note or example clarifying the attribute."
+        }
+      }
+    },
+
+    "workflow": {
+      "type": "object",
+      "title": "Workflow",
+      "description": "The end-to-end lifecycle of the capability described as ordered stages in prose. The AIM turns this into a formal state machine.",
+      "required": ["description", "stages"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "One-paragraph description of how the workflow behaves overall."
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/workflowStage" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "description": "Cross-cutting notes about the workflow (retention, reopen policy, etc.)."
+        }
+      }
+    },
+
+    "workflowStage": {
+      "type": "object",
+      "required": ["name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "description": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+
+    "businessRule": {
+      "type": "object",
+      "required": ["id", "statement"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^rule\\.[a-z0-9][a-z0-9-]*$",
+          "description": "Stable identifier so the rule can be referenced from other documents. Must start with 'rule.' followed by kebab-case."
+        },
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "The rule in one or two sentences, in business language."
+        },
+        "examples": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "description": "Concrete illustrations that help both the AI and human reviewers understand the intent."
+        }
+      }
+    },
+
+    "action": {
+      "type": "object",
+      "required": ["verb", "performedBy", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "verb": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "The action as a business-language verb phrase (e.g., 'Submit application')."
+        },
+        "performedBy": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "description": "Persona names that perform this action. Must match names in the 'personas' list."
+        },
+        "description": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+
+    "documents": {
+      "type": "object",
+      "title": "Documents",
+      "description": "The set of document types the capability must accept, described in business terms.",
+      "required": ["types"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "types": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "acceptedFormats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "sizeLimitNote": {
+          "type": "string",
+          "description": "Approximate size expectations in business terms. Concrete byte limits come from the AIM/CAM."
+        }
+      }
+    },
+
+    "nonFunctionalItem": {
+      "type": "object",
+      "required": ["concern", "expectation"],
+      "additionalProperties": false,
+      "properties": {
+        "concern": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Short label for the concern (e.g., 'Speed', 'Security', 'Privacy')."
+        },
+        "expectation": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "What the business expects, in prose. Resolved to concrete budgets/policies in the AIM."
+        }
+      }
+    },
+
+    "openQuestion": {
+      "type": "object",
+      "required": ["id", "question", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^q\\.[a-z0-9][a-z0-9-]*$",
+          "description": "Stable identifier for the question. Must start with 'q.' followed by kebab-case."
+        },
+        "question": { "$ref": "#/$defs/nonEmptyString" },
+        "askedOf": {
+          "type": "string",
+          "description": "Who is expected to answer (role or person)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "answered", "deferred", "wont-answer"],
+          "description": "Lifecycle status of the question."
+        },
+        "answer": {
+          "type": "string",
+          "description": "The recorded answer, once given."
+        }
+      }
+    },
+
+    "attachment": {
+      "type": "object",
+      "required": ["id", "type", "reference"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^att\\.[a-z0-9][a-z0-9-]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["transcript", "screenshot", "sample-form", "policy-document", "recording", "other"]
+        },
+        "reference": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "URI, workspace-relative path, or content hash pointing at the attachment."
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

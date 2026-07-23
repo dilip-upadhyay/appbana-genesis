@@ -13,6 +13,7 @@
     "test": "pnpm -r --if-present run test",
     "lint": "pnpm -r --if-present run lint",
     "typecheck": "pnpm -r --if-present run typecheck",
+    "validate:schemas": "pnpm --filter @appbana/validate-schemas run validate",
     "clean": "pnpm -r --if-present run clean && rimraf node_modules"
   },
   "devDependencies": {

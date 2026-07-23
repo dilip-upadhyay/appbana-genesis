@@ -23,7 +23,7 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 
 | Schema | Status | Owner |
 |---|---|---|
-| BIM v0.1 | ⏳ Not started | _TBD_ |
+| [BIM v0.1](../schemas/bim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
 | AIM v0.1 | ⏳ Not started | _TBD_ |
 | CAM v0.1 (10 sub-models) | ⏳ Not started | _TBD_ |
 | Operation Contract v0.1 | ⏳ Not started | _TBD_ |
@@ -36,14 +36,15 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 - [x] `.gitignore`, `.editorconfig`, `.nvmrc`
 - [x] CI skeleton (`.github/workflows/ci.yml`)
 - [x] CODEOWNERS and PR template
+- [x] Schema validator tool + CI job ([tools/validate-schemas](../../tools/validate-schemas/))
 - [ ] Package placeholders under `packages/` (populate as ADRs land)
 - [ ] Container image build pipeline
 - [ ] Documentation site (Docusaurus or alternative)
 
 ### WS-0.4 Reference Scenario Specification (Customer Onboarding)
 
-- [ ] BIM v0.1 hand-authored — `examples/customer-onboarding/bim.json`
-- [ ] AIM v0.1 hand-authored — `examples/customer-onboarding/aim.json`
+- [x] BIM v0.1 hand-authored — [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)
+- [x] AIM v0.1 hand-authored — [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json) (schema pending)
 - [ ] CAM v0.1 hand-authored — `examples/customer-onboarding/cam.json`
 - [ ] Round-trip validation script
 

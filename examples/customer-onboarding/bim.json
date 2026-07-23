@@ -1,0 +1,280 @@
+{
+  "$comment": "Hand-authored BIM v0.1 for the Customer Onboarding reference scenario. Business-language only. See ADR-011 for the BIM vs AIM contract. This document is the source-of-truth for what business users want; it is intentionally partial and iterative, and the AI translation pipeline (BIM -> AIM -> CAM) resolves it into the deterministic canonical model.",
+  "bimVersion": "0.1.0",
+  "metadata": {
+    "id": "bim.customer-onboarding",
+    "name": "Customer Onboarding",
+    "shortDescription": "Let a bank onboard a new customer end to end, from the customer starting an application to a manager approving it.",
+    "industry": "Retail and small-business banking",
+    "primaryOutcome": "A new customer exists in the bank's records, has been risk-assessed, and is ready to be issued products.",
+    "businessOwner": "Head of Customer Operations",
+    "authoredBy": "Dilip",
+    "createdAt": "2026-07-23",
+    "lastUpdatedAt": "2026-07-23",
+    "language": "en",
+    "status": "draft"
+  },
+
+  "changeHistory": [
+    {
+      "version": "0.1.0",
+      "date": "2026-07-23",
+      "author": "Dilip",
+      "summary": "Initial hand-authored BIM for the first vertical slice.",
+      "rationale": "Phase 0 reference artifact. Drives the shape of the BIM JSON Schema and the downstream AIM/CAM examples."
+    }
+  ],
+
+  "capability": {
+    "statement": "A prospective customer should be able to apply to become a customer of the bank. Bank staff should be able to check the application, ask for missing information, decide whether to accept it, and keep a full record of what happened and why.",
+    "scope": {
+      "included": [
+        "Individual and business customers",
+        "Customers in India and the United States (Phase 1 launch countries)",
+        "Applications started by the customer themselves or by a branch officer on their behalf",
+        "Basic risk assessment based on customer type, country and declared income",
+        "Uploading identity and tax documents",
+        "A single approval step by a manager for high-risk cases"
+      ],
+      "excluded": [
+        "Product opening (accounts, cards, loans) — that is a separate capability",
+        "Sanctions and PEP screening beyond a placeholder check",
+        "Multi-branch approval routing"
+      ]
+    },
+    "successMetrics": [
+      "Most low-risk applications are approved on the same working day.",
+      "No application can be approved without the required documents for its country and customer type.",
+      "Any decision (approve, reject, request more info) can be explained after the fact — which rules fired, what was seen, who acted."
+    ]
+  },
+
+  "personas": [
+    {
+      "name": "Applicant",
+      "description": "The person applying to become a customer, or a business's authorised representative applying on behalf of the business.",
+      "goals": [
+        "Fill in the application without confusing jargon.",
+        "Only be asked for information that is actually needed for their situation.",
+        "Know what happens next and roughly when."
+      ],
+      "typicalActions": ["Start an application", "Save and come back later", "Upload documents", "Submit for review"]
+    },
+    {
+      "name": "Reviewer",
+      "description": "A bank operations analyst who checks applications for completeness and accuracy.",
+      "goals": [
+        "Quickly see what changed since last time.",
+        "Ask the applicant for missing or better information without re-typing it.",
+        "Route the case to a manager if it is above their approval limit."
+      ],
+      "typicalActions": ["Open a submitted application", "Request more information", "Send to manager for approval", "Reject with a reason"]
+    },
+    {
+      "name": "Manager",
+      "description": "A senior operations manager who approves higher-risk applications.",
+      "goals": [
+        "See the reviewer's notes and the risk assessment together.",
+        "Approve or reject with an audit-quality reason."
+      ],
+      "typicalActions": ["Approve a high-risk case", "Reject with a reason", "Send it back to the reviewer"]
+    },
+    {
+      "name": "Auditor",
+      "description": "Read-only access for internal audit and compliance.",
+      "goals": [
+        "See everything about any application at any point in time.",
+        "See who did what and why."
+      ],
+      "typicalActions": ["Open any historical application", "Export the audit trail"]
+    }
+  ],
+
+  "businessObjects": [
+    {
+      "name": "Customer",
+      "description": "The person or business the bank is being asked to onboard.",
+      "attributes": [
+        { "name": "Full name (individuals) or legal name (businesses)", "required": true },
+        { "name": "Customer type", "required": true, "allowedValues": ["Individual", "Business"] },
+        { "name": "Country of residence or registration", "required": true },
+        { "name": "Date of birth (individuals) or date of incorporation (businesses)", "required": true },
+        { "name": "Tax identifier", "note": "Format and which one is required depends on country and customer type." },
+        { "name": "Declared annual income (individuals) or declared annual turnover (businesses)" },
+        { "name": "Contact email", "required": true },
+        { "name": "Contact phone" }
+      ]
+    },
+    {
+      "name": "Onboarding case",
+      "description": "One attempt by an applicant to become a customer. Has a status, an owner, a history, and attached documents.",
+      "attributes": [
+        { "name": "Case reference", "required": true, "note": "Human-friendly identifier shown to the applicant and staff." },
+        { "name": "Status", "required": true, "note": "Draft, submitted, in review, waiting for applicant, approved, rejected." },
+        { "name": "Assigned reviewer" },
+        { "name": "Risk score", "note": "Number from 0 to 10. Higher means more risk." },
+        { "name": "Risk band", "note": "Low, Medium, High. Derived from the score." },
+        { "name": "Decision reason", "note": "Free-text captured at approve or reject." }
+      ]
+    },
+    {
+      "name": "Document",
+      "description": "A file the applicant uploads as part of their application.",
+      "attributes": [
+        { "name": "Document type", "required": true, "note": "e.g. Passport, PAN card, GST certificate, Utility bill." },
+        { "name": "Uploaded file", "required": true },
+        { "name": "Uploaded at", "required": true },
+        { "name": "Verified by reviewer" }
+      ]
+    }
+  ],
+
+  "workflow": {
+    "description": "A case moves through these stages. Most cases go through them in order but reviewers can send a case back for more information.",
+    "stages": [
+      { "name": "Draft", "description": "Applicant is still filling it in. Not visible to staff yet." },
+      { "name": "Submitted", "description": "Applicant has submitted. A reviewer is assigned automatically." },
+      { "name": "In review", "description": "A reviewer is actively working on it." },
+      { "name": "Waiting for applicant", "description": "Reviewer has asked for more information. Applicant can update and resubmit." },
+      { "name": "Pending manager approval", "description": "Reviewer has sent a high-risk case to a manager." },
+      { "name": "Approved", "description": "Terminal. Customer record is created." },
+      { "name": "Rejected", "description": "Terminal. Reason is recorded." }
+    ],
+    "notes": [
+      "Applicants can save a draft and come back to it for up to 30 days before it is auto-discarded.",
+      "Approved and rejected cases are read-only forever — no edits, only comments by staff with the right permission."
+    ]
+  },
+
+  "businessRules": [
+    {
+      "id": "rule.tax-id-required",
+      "statement": "A tax identifier is always required, but which one depends on the country and customer type.",
+      "examples": [
+        "An Indian individual must provide a PAN.",
+        "An Indian business must provide both a PAN and a GSTIN.",
+        "A US individual must provide an SSN or ITIN.",
+        "A US business must provide an EIN."
+      ]
+    },
+    {
+      "id": "rule.documents-by-country",
+      "statement": "The set of required documents depends on the country and customer type.",
+      "examples": [
+        "Indian individuals: PAN card image plus a proof of address.",
+        "Indian businesses: PAN card, GST certificate, and certificate of incorporation.",
+        "US individuals: Government-issued photo ID plus a proof of address."
+      ]
+    },
+    {
+      "id": "rule.high-risk-needs-manager",
+      "statement": "If the risk score is above 7, a manager must approve the case. Otherwise the reviewer can approve it.",
+      "examples": [
+        "A US individual with declared income under 20,000 USD and no proof of employment is high risk.",
+        "A business whose country of registration is different from its main operating country is high risk."
+      ]
+    },
+    {
+      "id": "rule.field-visibility-by-role",
+      "statement": "Some information is only visible to staff, not to the applicant.",
+      "examples": [
+        "The internal risk score and risk band are visible to Reviewer, Manager and Auditor, but never to the Applicant.",
+        "The assigned reviewer's name is visible to Manager and Auditor only."
+      ]
+    },
+    {
+      "id": "rule.decision-reason-required",
+      "statement": "Any approval or rejection must include a reason. An empty reason is not allowed."
+    }
+  ],
+
+  "actions": [
+    {
+      "verb": "Start application",
+      "performedBy": ["Applicant"],
+      "description": "Create a new draft onboarding case."
+    },
+    {
+      "verb": "Save draft",
+      "performedBy": ["Applicant"],
+      "description": "Save progress without submitting."
+    },
+    {
+      "verb": "Upload document",
+      "performedBy": ["Applicant"],
+      "description": "Attach a document of a given type to the case."
+    },
+    {
+      "verb": "Submit application",
+      "performedBy": ["Applicant"],
+      "description": "Send the completed application for review."
+    },
+    {
+      "verb": "Request more information",
+      "performedBy": ["Reviewer"],
+      "description": "Ask the applicant for a specific missing or corrected piece of information."
+    },
+    {
+      "verb": "Send for manager approval",
+      "performedBy": ["Reviewer"],
+      "description": "Route the case to a manager because it is high risk or above the reviewer's authority."
+    },
+    {
+      "verb": "Approve",
+      "performedBy": ["Reviewer", "Manager"],
+      "description": "Accept the application. A reason must be recorded. Managers can approve high-risk cases; reviewers only low and medium risk."
+    },
+    {
+      "verb": "Reject",
+      "performedBy": ["Reviewer", "Manager"],
+      "description": "Reject the application with a documented reason."
+    }
+  ],
+
+  "documents": {
+    "description": "The set of document types the platform must be able to accept and label.",
+    "types": [
+      "PAN card",
+      "GST certificate",
+      "Certificate of incorporation",
+      "Passport",
+      "Government-issued photo ID",
+      "Proof of address (utility bill or bank statement)",
+      "Proof of employment or income"
+    ],
+    "acceptedFormats": ["PDF", "JPEG", "PNG"],
+    "sizeLimitNote": "Individual files should not be huge — a few megabytes each is fine for now."
+  },
+
+  "nonFunctional": [
+    { "concern": "Speed", "expectation": "The application form should feel snappy on a normal broadband connection. No page should feel slow to load." },
+    { "concern": "Reliability", "expectation": "If something goes wrong mid-application, the applicant should not lose their work." },
+    { "concern": "Security", "expectation": "Only staff with the right role should be able to see internal fields like risk score. Uploaded documents must be stored safely." },
+    { "concern": "Privacy", "expectation": "Personal identifiers (tax IDs, dates of birth) must be treated as sensitive and only shown to those who need them." },
+    { "concern": "Auditability", "expectation": "Every decision must be explainable after the fact. Auditors should be able to answer 'why was this shown' and 'why did this rule fire' for any past case." },
+    { "concern": "Accessibility", "expectation": "The applicant-facing form should be usable by people with common assistive technologies." }
+  ],
+
+  "openQuestions": [
+    {
+      "id": "q.risk-scoring-model",
+      "question": "For Phase 0/1, is the risk score calculated by a simple rules table or by a scoring model? The example values assume a rules table.",
+      "askedOf": "Business owner",
+      "status": "open"
+    },
+    {
+      "id": "q.reviewer-assignment",
+      "question": "How are reviewers assigned to submitted cases? Round-robin, workload-based, or manual pick from a queue?",
+      "askedOf": "Head of Customer Operations",
+      "status": "open"
+    },
+    {
+      "id": "q.draft-retention-days",
+      "question": "Draft retention is assumed to be 30 days. Is that the actual policy?",
+      "askedOf": "Compliance",
+      "status": "open"
+    }
+  ],
+
+  "attachments": []
+}
