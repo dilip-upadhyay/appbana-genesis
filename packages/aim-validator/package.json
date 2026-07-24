@@ -1,0 +1,35 @@
+{
+  "name": "@appbana/aim-validator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Full validator for Application Intent Model (AIM) v0.1 documents: JSON Schema validation + symbol table + cross-reference resolution + duplicate-id detection. Ships an adapter for `@appbana/normalization-agent`'s `AimValidator` function signature so callers can drop this in place of the built-in schema-only default.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@appbana/normalization-agent": "file:../normalization-agent",
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}

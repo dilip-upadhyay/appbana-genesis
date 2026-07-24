@@ -1,0 +1,33 @@
+{
+  "name": "@appbana/canonical-application-generator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic AIM v0.1 -> CAM v0.1 generator. Pure function of (AIM, options); identical input yields byte-identical CAM. Never uses AI. Emits actionable diagnostics for AIM constructs that do not map cleanly to CAM (e.g. custom rule operators, unknown state-machine effects).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@appbana/aim-validator": "file:../aim-validator",
+    "@types/node": "^22.9.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
