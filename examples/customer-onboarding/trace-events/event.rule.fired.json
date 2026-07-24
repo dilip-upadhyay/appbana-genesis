@@ -1,0 +1,61 @@
+{
+  "$comment": "Fixture: rules-runtime emits event.rule.fired when rule.tax-id-format matched a case (IN + individual). Trace Viewer uses this class of event to answer 'why did this rule fire?'.",
+
+  "traceEventVersion": "0.1",
+  "id": "6f6f7c1e-7c1e-4a9a-8c1e-000000000303",
+  "eventKindRef": "event.rule.fired",
+  "occurredAt": "2026-07-24T10:14:58.500Z",
+  "producedBy": {
+    "kind": "runtime-engine",
+    "engine": "runtime-rules",
+    "engineVersion": "0.1.0"
+  },
+  "traceContext": {
+    "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "spanId": "1a2b3c4d5e6f7a8b",
+    "parentSpanId": "00f067aa0ba902b7"
+  },
+  "correlation": {
+    "correlationId": "8c1e4a9a-6f6f-7c1e-8c1e-000000000abc",
+    "causationId": null,
+    "principal": {
+      "roleId": "role.applicant",
+      "subjectId": "sub_2f4a1e",
+      "authenticated": true
+    }
+  },
+  "context": {
+    "appId": "customer-onboarding",
+    "camId": "cam.customer-onboarding",
+    "camVersion": "0.1.0",
+    "tenantId": null,
+    "environment": "dev",
+    "region": "IN"
+  },
+  "severity": "info",
+  "payload": {
+    "ruleId": "rule.tax-id-format",
+    "caseMatched": 0,
+    "kind": "field-constraint",
+    "priority": 90,
+    "matchedInputs": {
+      "entity.customer.country": "IN",
+      "entity.customer.customerType": "individual"
+    },
+    "actionsApplied": [
+      {
+        "action": "match-pattern",
+        "entity": "entity.customer",
+        "field": "taxIdentifier",
+        "patternLabel": "PAN"
+      }
+    ],
+    "outcome": "actions-applied"
+  },
+  "redactions": [],
+  "attributes": {
+    "rule.kind": "field-constraint",
+    "rule.priority": 90,
+    "rule.outcome": "matched"
+  }
+}

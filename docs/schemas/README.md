@@ -9,8 +9,8 @@ This directory contains versioned JSON Schemas for every canonical artifact in A
 | Business Intent Model | [bim.v0.1.schema.json](bim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)) |
 | Application Intent Model | [aim.v0.1.schema.json](aim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json)) |
 | Canonical Application Model | [cam.v0.1.schema.json](cam.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/cam.json](../../examples/customer-onboarding/cam.json)) |
-| Operation Contract | `operation-contract.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
-| Trace Event | `trace-event.v0.1.schema.json` | v0.1 | Not started (WS-0.2) |
+| Operation Contract | [operation-contract.v0.1.schema.json](operation-contract.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/operation-contracts/customer.submit-onboarding.v1.json](../../examples/customer-onboarding/operation-contracts/customer.submit-onboarding.v1.json)) |
+| Trace Event | [trace-event.v0.1.schema.json](trace-event.v0.1.schema.json) | v0.1 | ✅ Published (validated against 3 fixtures in [examples/customer-onboarding/trace-events/](../../examples/customer-onboarding/trace-events/)) |
 
 ## Rules
 
@@ -23,4 +23,6 @@ This directory contains versioned JSON Schemas for every canonical artifact in A
 
 - [ADR-011 — BIM vs AIM Boundary](../adr/ADR-011-bim-aim-boundary.md)
 - [ADR-012 — CAM Versioning Strategy](../adr/ADR-012-canonical-application-model-versioning.md)
+- [ADR-013 — Runtime Engine Contract](../adr/ADR-013-runtime-engine-contract.md)
+- [ADR-014 — Technology Adapter Contract & Conformance](../adr/ADR-014-technology-adapter-contract.md)
 - [architecture.md § 9 — Canonical Application Model](../../architecture.md)

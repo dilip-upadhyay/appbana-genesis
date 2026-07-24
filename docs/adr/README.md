@@ -20,8 +20,8 @@ We use a lightweight [MADR](https://adr.github.io/madr/)-style format. See [`000
 | [ADR-011](ADR-011-bim-aim-boundary.md) | Business Intent Model vs Application Intent Model Boundary | Accepted |
 | [ADR-012](ADR-012-canonical-application-model-versioning.md) | Canonical Application Model Versioning Strategy | Accepted |
 | [ADR-013](ADR-013-runtime-engine-contract.md) | Runtime Engine Contract & Lifecycle | Accepted |
-| [ADR-014](ADR-014-technology-adapter-contract.md) | Technology Adapter Contract & Conformance | Proposed |
-| [ADR-015](ADR-015-ai-model-adapter-layer.md) | AI Model Adapter Layer & Provenance | Proposed |
+| [ADR-014](ADR-014-technology-adapter-contract.md) | Technology Adapter Contract & Conformance | Accepted |
+| [ADR-015](ADR-015-ai-model-adapter-layer.md) | AI Model Adapter Layer & Provenance | Accepted |
 | [ADR-016](ADR-016-deployment-packaging.md) | Deployment Packaging (Kubernetes-first) | Proposed |
 | [ADR-017](ADR-017-governance-publication-gate.md) | Governance Publication Gate & Rollback | Proposed |
 

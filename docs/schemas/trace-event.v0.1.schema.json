@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.appbana.dev/trace-event/v0.1",
+  "title": "Trace Event v0.1",
+  "description": "The wire format for every observability event emitted by a runtime engine (ADR-013), a technology adapter (ADR-014), or the platform kernel. Trace events are the substrate for the Trace Viewer — they must be able to answer 'why did this field appear?', 'why did this rule fire?', and 'why did this side effect happen?'. Every event references a declared `eventKindRef` from the CAM ObservabilityModel; unknown kinds are refused at load time. Payload shape depends on the eventKind and is validated by the Observability Runtime against a per-kind JSON Schema (published separately in Phase 1). Redaction of PII/sensitive-pii fields per CAM SecurityModel.dataClassifications is captured in `redactions` for audit integrity.",
+
+  "type": "object",
+  "required": [
+    "traceEventVersion",
+    "id",
+    "eventKindRef",
+    "occurredAt",
+    "producedBy",
+    "traceContext",
+    "correlation",
+    "context",
+    "severity",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": { "type": "string" },
+    "traceEventVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Version of this trace-event envelope. Currently '0.1'. A change to the envelope shape is a major bump per ADR-012."
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Globally unique event id. Produced by the emitter, never re-used."
+    },
+    "eventKindRef": {
+      "type": "string",
+      "pattern": "^event\\.[a-z][a-z0-9.-]*$",
+      "description": "Must match a `traceEventKinds[].id` in the loaded CAM's ObservabilityModel."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of when the event happened. Supplied by the Observability Runtime via injected clock (ADR-013 determinism). Never wall-clock inside an engine."
+    },
+    "producedBy": { "$ref": "#/$defs/producer" },
+    "traceContext": {
+      "type": "object",
+      "required": ["traceId", "spanId"],
+      "additionalProperties": false,
+      "properties": {
+        "traceId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$",
+          "description": "W3C Trace Context trace-id (16-byte hex). Propagated across engines and adapters unchanged."
+        },
+        "spanId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "W3C Trace Context span-id (8-byte hex)."
+        },
+        "parentSpanId": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{16}$"
+        }
+      }
+    },
+    "correlation": {
+      "type": "object",
+      "required": ["correlationId"],
+      "additionalProperties": false,
+      "properties": {
+        "correlationId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Business-level correlation across an entire user-visible action (e.g., one submit-onboarding). Echoed from the triggering EffectDescriptor."
+        },
+        "causationId": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "id of the trace event that directly caused this one. Chains reconstruct the causal DAG."
+        },
+        "principal": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "roleId": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" },
+            "subjectId": { "type": ["string", "null"], "description": "Opaque, non-PII subject identifier (e.g., hash of applicant id). Never the raw email or legal name." },
+            "authenticated": { "type": "boolean" }
+          },
+          "required": ["roleId", "authenticated"]
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "required": ["appId", "camId", "camVersion", "environment"],
+      "additionalProperties": false,
+      "properties": {
+        "appId": { "type": "string", "minLength": 1 },
+        "camId": { "type": "string", "pattern": "^cam\\.[a-z0-9][a-z0-9-]*$" },
+        "camVersion": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$",
+          "description": "MetadataModel.appVersion of the CAM in force when the event was emitted."
+        },
+        "tenantId": { "type": ["string", "null"] },
+        "environment": {
+          "type": "string",
+          "enum": ["dev", "staging", "canary", "prod"]
+        },
+        "region": { "type": "string" }
+      }
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["debug", "info", "warn", "error"],
+      "description": "Trace-event severity. Distinct from Diagnostic severity (ADR-013). An `error` trace event does NOT necessarily indicate an operation failure — it may record an expected failure that the diagnostic already covers."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event-kind-specific data. Shape is validated by the Observability Runtime against a per-kind JSON Schema fragment (see follow-up: Trace Event Kind Registry, Phase 1). At v0.1 the envelope treats it as open — the runtime enforces shape."
+    },
+    "redactions": {
+      "type": "array",
+      "description": "Every field elided or masked in `payload` per CAM SecurityModel.dataClassifications. Empty array MUST be present when nothing was redacted, so consumers can distinguish 'none redacted' from 'redaction not run'.",
+      "items": {
+        "type": "object",
+        "required": ["path", "classification", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "JSON Pointer relative to `payload`."
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["public", "internal", "confidential", "pii", "sensitive-pii"]
+          },
+          "action": {
+            "type": "string",
+            "enum": ["removed", "masked", "hashed", "truncated"]
+          },
+          "policyRef": {
+            "type": "string",
+            "description": "Which SecurityModel.dataClassifications entry was applied."
+          }
+        }
+      }
+    },
+    "reproducibilityHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "REQUIRED on adapter-produced events per ADR-014. Sha256 over the canonicalized adapter inputs (effect descriptor after redaction + relevant adapter config). Enables replay comparison and detection of adapter reproducibility incidents."
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Free-form key-value attributes for OpenTelemetry export. Values must be scalar (string, number, boolean) or arrays of scalars.",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+
+  "allOf": [
+    {
+      "$comment": "Adapter events MUST carry a reproducibilityHash per ADR-014.",
+      "if": {
+        "properties": {
+          "producedBy": {
+            "properties": { "kind": { "const": "adapter" } },
+            "required": ["kind"]
+          }
+        },
+        "required": ["producedBy"]
+      },
+      "then": {
+        "required": ["reproducibilityHash"]
+      }
+    }
+  ],
+
+  "$defs": {
+    "producer": {
+      "$comment": "Discriminated on `kind`. Runtime engines use their name from the ADR-013 enum; adapters use their identity from ADR-014; the kernel and its subsystems use their well-known name.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "engine"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "runtime-engine" },
+            "engine": {
+              "type": "string",
+              "enum": [
+                "runtime-interaction-ui",
+                "runtime-workflow",
+                "runtime-rules",
+                "runtime-operations",
+                "runtime-data",
+                "runtime-integration",
+                "runtime-security-policy",
+                "runtime-observability"
+              ]
+            },
+            "engineVersion": {
+              "type": "string",
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "adapterKind", "binding"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "adapter" },
+            "adapterKind": {
+              "type": "string",
+              "enum": ["internal", "data", "integration", "notification", "storage"]
+            },
+            "binding": { "type": "string", "minLength": 1 },
+            "adapterVersion": {
+              "type": "string",
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$"
+            },
+            "conformanceTier": { "type": "string", "enum": ["A", "B", "C"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "subsystem"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "kernel" },
+            "subsystem": {
+              "type": "string",
+              "enum": ["loader", "scheduler", "registry", "gate", "effect-dispatch", "provenance"]
+            },
+            "kernelVersion": {
+              "type": "string",
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

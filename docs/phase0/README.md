@@ -14,8 +14,8 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 | [ADR-011 BIM vs AIM boundary](../adr/ADR-011-bim-aim-boundary.md) | ✅ Accepted | Dilip |
 | [ADR-012 CAM versioning](../adr/ADR-012-canonical-application-model-versioning.md) | ✅ Accepted | Dilip |
 | [ADR-013 Runtime engine contract](../adr/ADR-013-runtime-engine-contract.md) | ✅ Accepted | Dilip |
-| [ADR-014 Technology adapter contract](../adr/ADR-014-technology-adapter-contract.md) | ⏳ Proposed | _TBD_ |
-| [ADR-015 AI model adapter layer](../adr/ADR-015-ai-model-adapter-layer.md) | ⏳ Proposed | _TBD_ |
+| [ADR-014 Technology adapter contract](../adr/ADR-014-technology-adapter-contract.md) | ✅ Accepted | Dilip |
+| [ADR-015 AI model adapter layer](../adr/ADR-015-ai-model-adapter-layer.md) | ✅ Accepted | Dilip |
 | [ADR-016 Deployment packaging](../adr/ADR-016-deployment-packaging.md) | ⏳ Proposed | _TBD_ |
 | [ADR-017 Governance publication gate](../adr/ADR-017-governance-publication-gate.md) | ⏳ Proposed | _TBD_ |
 
@@ -26,8 +26,8 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 | [BIM v0.1](../schemas/bim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
 | [AIM v0.1](../schemas/aim.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
 | [CAM v0.1](../schemas/cam.v0.1.schema.json) | ✅ v0.1 published (validated against Customer Onboarding reference) | Dilip |
-| Operation Contract v0.1 | ⏳ Not started | _TBD_ |
-| Trace Event v0.1 | ⏳ Not started | _TBD_ |
+| [Operation Contract v0.1](../schemas/operation-contract.v0.1.schema.json) | ✅ v0.1 published (validated against `operation.customer.submit-onboarding:v1`) | Dilip |
+| [Trace Event v0.1](../schemas/trace-event.v0.1.schema.json) | ✅ v0.1 published (validated against 3 fixtures: runtime-engine, adapter, kernel producers) | Dilip |
 
 ### WS-0.3 Repository Scaffolding
 

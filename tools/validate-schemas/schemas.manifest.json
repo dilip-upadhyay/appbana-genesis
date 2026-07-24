@@ -21,6 +21,22 @@
       "examples": [
         "examples/customer-onboarding/cam.json"
       ]
+    },
+    {
+      "name": "Operation Contract v0.1 — Customer Onboarding",
+      "schema": "docs/schemas/operation-contract.v0.1.schema.json",
+      "examples": [
+        "examples/customer-onboarding/operation-contracts/customer.submit-onboarding.v1.json"
+      ]
+    },
+    {
+      "name": "Trace Event v0.1 — Customer Onboarding fixtures",
+      "schema": "docs/schemas/trace-event.v0.1.schema.json",
+      "examples": [
+        "examples/customer-onboarding/trace-events/event.case.submitted.json",
+        "examples/customer-onboarding/trace-events/event.adapter.applied.json",
+        "examples/customer-onboarding/trace-events/event.rule.fired.json"
+      ]
     }
   ]
 }

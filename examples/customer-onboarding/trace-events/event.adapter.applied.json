@@ -1,0 +1,76 @@
+{
+  "$comment": "Fixture: data adapter (data:sqlite) emits event.adapter.applied after persisting a customer draft. Carries the reproducibilityHash mandated by ADR-014 (required for adapter-produced events). Illustrates redaction: legalName (pii) and taxIdentifier (sensitive-pii) were masked before the payload was written, and the redaction map records what happened.",
+
+  "traceEventVersion": "0.1",
+  "id": "6f6f7c1e-7c1e-4a9a-8c1e-000000000202",
+  "eventKindRef": "event.adapter.applied",
+  "occurredAt": "2026-07-24T10:14:59.987Z",
+  "producedBy": {
+    "kind": "adapter",
+    "adapterKind": "data",
+    "binding": "data:sqlite",
+    "adapterVersion": "0.1.0",
+    "conformanceTier": "C"
+  },
+  "traceContext": {
+    "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "spanId": "b7ad6b7169203331",
+    "parentSpanId": "00f067aa0ba902b7"
+  },
+  "correlation": {
+    "correlationId": "8c1e4a9a-6f6f-7c1e-8c1e-000000000abc",
+    "causationId": "6f6f7c1e-7c1e-4a9a-8c1e-000000000100",
+    "principal": {
+      "roleId": "role.applicant",
+      "subjectId": "sub_2f4a1e",
+      "authenticated": true
+    }
+  },
+  "context": {
+    "appId": "customer-onboarding",
+    "camId": "cam.customer-onboarding",
+    "camVersion": "0.1.0",
+    "tenantId": null,
+    "environment": "dev",
+    "region": "IN"
+  },
+  "severity": "info",
+  "payload": {
+    "operationRef": "operation.customer.save-draft:v1",
+    "effect": {
+      "type": "persist",
+      "entity": "entity.customer",
+      "operation": "upsert",
+      "rowCount": 1
+    },
+    "customer": {
+      "id": "01f2b3c4-d5e6-4788-9aab-000000000001",
+      "customerType": "individual",
+      "country": "IN",
+      "legalName": "****",
+      "taxIdentifier": "****WXYZ"
+    },
+    "durationMs": 12,
+    "outcome": "success"
+  },
+  "redactions": [
+    {
+      "path": "/customer/legalName",
+      "classification": "pii",
+      "action": "masked",
+      "policyRef": "dataClassifications:pii"
+    },
+    {
+      "path": "/customer/taxIdentifier",
+      "classification": "sensitive-pii",
+      "action": "masked",
+      "policyRef": "dataClassifications:sensitive-pii"
+    }
+  ],
+  "reproducibilityHash": "sha256:c1a2f7b8de901234567890abcdef1234567890abcdef1234567890abcdef1234",
+  "attributes": {
+    "db.system": "sqlite",
+    "db.operation": "upsert",
+    "adapter.retryable": false
+  }
+}

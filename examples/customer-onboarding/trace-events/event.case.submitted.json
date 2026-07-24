@@ -1,0 +1,50 @@
+{
+  "$comment": "Fixture: workflow-runtime emits event.case.submitted when the case state machine transitions draft -> submitted (per CAM ObservabilityModel and WorkflowModel). No redactions — payload carries only structural ids, not applicant PII.",
+
+  "traceEventVersion": "0.1",
+  "id": "6f6f7c1e-7c1e-4a9a-8c1e-000000000101",
+  "eventKindRef": "event.case.submitted",
+  "occurredAt": "2026-07-24T10:15:00.123Z",
+  "producedBy": {
+    "kind": "runtime-engine",
+    "engine": "runtime-workflow",
+    "engineVersion": "0.1.0"
+  },
+  "traceContext": {
+    "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "spanId": "00f067aa0ba902b7",
+    "parentSpanId": null
+  },
+  "correlation": {
+    "correlationId": "8c1e4a9a-6f6f-7c1e-8c1e-000000000abc",
+    "causationId": null,
+    "principal": {
+      "roleId": "role.applicant",
+      "subjectId": "sub_2f4a1e",
+      "authenticated": true
+    }
+  },
+  "context": {
+    "appId": "customer-onboarding",
+    "camId": "cam.customer-onboarding",
+    "camVersion": "0.1.0",
+    "tenantId": null,
+    "environment": "dev",
+    "region": "IN"
+  },
+  "severity": "info",
+  "payload": {
+    "stateMachineId": "state-machine.case-lifecycle",
+    "transitionId": "t.submit",
+    "fromState": "draft",
+    "toState": "submitted",
+    "caseId": "01f2b3c4-d5e6-4788-9aab-000000000001",
+    "assignedReviewerPolicy": "round-robin"
+  },
+  "redactions": [],
+  "attributes": {
+    "app.slice": "customer-onboarding",
+    "workflow.state.terminal": false,
+    "workflow.transition.guarded": true
+  }
+}

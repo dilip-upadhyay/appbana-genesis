@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.appbana.dev/operation-contract/v0.1",
+  "title": "Operation Contract v0.1",
+  "description": "The per-operation contract consumed by the Operations Runtime (ADR-013). Every unique (operationId, majorVersion) pair has exactly one Operation Contract published in the metadata registry. A CAM OperationModel entry names the contract; the kernel resolves the contract at load time and hands it to the Operations Runtime along with a matching adapter binding. The contract is technology-agnostic: it declares what an operation does — inputs, outputs, guards, idempotency, retry, error taxonomy, side effect kinds, audit — but not how any specific adapter fulfils it. See ADR-014 for the adapter side of the contract.",
+
+  "type": "object",
+  "required": [
+    "operationContractVersion",
+    "id",
+    "version",
+    "description",
+    "allowedRoles",
+    "idempotency",
+    "adapter",
+    "inputSchema",
+    "outputSchema",
+    "sideEffects",
+    "auditEvent"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": { "type": "string" },
+    "operationContractVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Version of the Operation Contract envelope itself. Currently '0.1'."
+    },
+    "id": { "$ref": "#/$defs/operationId" },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Operation major version. Matches the ':vN' suffix used in CAM operationRef and in the state machine transition.triggeredBy field."
+    },
+    "description": { "$ref": "#/$defs/nonEmptyString" },
+    "sourceCam": {
+      "type": "object",
+      "required": ["camId", "camVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "camId": { "type": "string", "pattern": "^cam\\.[a-z0-9][a-z0-9-]*$" },
+        "camVersion": { "$ref": "#/$defs/semverString" }
+      }
+    },
+    "allowedRoles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/roleId" }
+    },
+    "idempotency": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "enum": ["client-key", "pure", "content-hash", "state-guarded"] },
+        "keyField": { "$ref": "#/$defs/nonEmptyString" },
+        "windowSeconds": { "type": "integer", "minimum": 1, "description": "How long the Operations Runtime deduplicates identical requests. Absent means the platform default." }
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "enum": ["none", "fixed", "exponential"] },
+        "maxAttempts": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "backoffMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "guardRef": {
+      "type": "string",
+      "pattern": "^rule\\.[a-z][a-z0-9-]*$",
+      "description": "Optional single rule that must evaluate true before the operation is dispatched. Combined-expression guards live at the transition level, not the operation."
+    },
+    "inputSchema": {
+      "$ref": "#/$defs/jsonSchemaFragment",
+      "description": "JSON Schema for the operation's input payload. Validated by the Operations Runtime before the adapter is invoked."
+    },
+    "outputSchema": {
+      "$ref": "#/$defs/jsonSchemaFragment",
+      "description": "JSON Schema for the operation's output payload. Validated by the Operations Runtime after the adapter returns and before the effect is emitted."
+    },
+    "sideEffects": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "description": "Declared side-effect tags. Must be a superset of any effect kinds the operation may emit. Trivially derivable from CAM WorkflowModel and OperationModel. Used at load-time to verify adapter capabilities cover the operation."
+    },
+    "auditEvent": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Audit event name written to the audit log for every successful invocation. Failed invocations produce '<auditEvent>.failed'."
+    },
+    "adapter": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["internal", "data", "integration", "notification", "storage"]
+        },
+        "binding": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "Free-form binding string interpreted by the adapter for this kind. Examples: 'entity.customer', 'object-store:default', 'notification:email'."
+        },
+        "requiredCapabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "description": "Adapter capabilities the operation requires. The kernel refuses to load a CAM if the bound adapter does not declare these. See ADR-014."
+        }
+      }
+    },
+    "errorTaxonomy": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "retryable"],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "Machine-readable error code. UPPER_SNAKE_CASE. Stable across versions."
+          },
+          "retryable": { "type": "boolean" },
+          "userMessage": { "type": "string" },
+          "httpStatusHint": { "type": "integer", "minimum": 400, "maximum": 599 }
+        }
+      }
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Hard timeout enforced by the Operations Runtime. If absent, the platform default applies."
+    }
+  },
+
+  "$defs": {
+    "semverString": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$"
+    },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "roleId": { "type": "string", "pattern": "^role\\.[a-z][a-z0-9-]*$" },
+    "operationId": { "type": "string", "pattern": "^operation\\.[a-z][a-z0-9.-]*$" },
+    "jsonSchemaFragment": {
+      "$comment": "A JSON Schema Draft 2020-12 fragment. Deliberately typed as 'object' at v0.1 rather than $ref'ing the full meta-schema, to avoid pulling the meta-schema into every validator run. The Operations Runtime compiles fragments with Ajv2020 at load time; malformed fragments are reported as load-time Diagnostics.",
+      "type": "object"
+    }
+  }
+}

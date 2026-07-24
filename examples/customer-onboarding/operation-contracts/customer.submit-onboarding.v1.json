@@ -1,0 +1,113 @@
+{
+  "$comment": "Hand-authored Operation Contract v0.1 for operation.customer.submit-onboarding:v1. Derived from the corresponding CAM OperationModel entry in ../cam.json — enriched with an explicit inputSchema and outputSchema. In normal flow the CAM generator produces one contract file per unique (operationId, majorVersion) pair, and the Operations Runtime loads them at startup.",
+
+  "operationContractVersion": "0.1",
+  "id": "operation.customer.submit-onboarding",
+  "version": "1",
+  "description": "Applicant-initiated operation that atomically persists the current draft and drives the case state machine from 'draft' to 'submitted' (or from 'waiting-for-applicant' back to 'in-review').",
+  "sourceCam": {
+    "camId": "cam.customer-onboarding",
+    "camVersion": "0.1.0"
+  },
+  "allowedRoles": ["role.applicant"],
+  "idempotency": {
+    "kind": "client-key",
+    "keyField": "clientRequestId",
+    "windowSeconds": 3600
+  },
+  "retryPolicy": {
+    "kind": "none"
+  },
+  "guardRef": "rule.submission-completeness",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["caseId", "clientRequestId"],
+    "additionalProperties": false,
+    "properties": {
+      "caseId": { "type": "string", "format": "uuid" },
+      "clientRequestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+      "confirmations": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "acceptedTerms": { "type": "boolean", "const": true },
+          "acceptedPrivacyPolicy": { "type": "boolean", "const": true }
+        }
+      }
+    }
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["caseId", "status", "transitionApplied"],
+    "additionalProperties": false,
+    "properties": {
+      "caseId": { "type": "string", "format": "uuid" },
+      "status": {
+        "type": "string",
+        "enum": ["submitted", "in-review"]
+      },
+      "transitionApplied": {
+        "type": "string",
+        "enum": ["t.submit", "t.resubmit"]
+      },
+      "assignedReviewerId": { "type": ["string", "null"] },
+      "submittedAt": { "type": "string", "format": "date-time" }
+    }
+  },
+  "sideEffects": [
+    "persist",
+    "transition:t.submit",
+    "transition:t.resubmit"
+  ],
+  "auditEvent": "customer.submitted",
+  "adapter": {
+    "kind": "internal",
+    "binding": "kernel:state-transition",
+    "requiredCapabilities": [
+      "state-transition",
+      "atomic-persist",
+      "guard-evaluation"
+    ]
+  },
+  "errorTaxonomy": [
+    {
+      "code": "VALIDATION_FAILED",
+      "retryable": false,
+      "userMessage": "Some fields are missing or invalid. Please review and try again.",
+      "httpStatusHint": 400
+    },
+    {
+      "code": "SUBMISSION_INCOMPLETE",
+      "retryable": false,
+      "userMessage": "Your application is not yet complete. Please provide the missing information and documents.",
+      "httpStatusHint": 422
+    },
+    {
+      "code": "IDEMPOTENCY_CONFLICT",
+      "retryable": false,
+      "userMessage": "This submission has already been received.",
+      "httpStatusHint": 409
+    },
+    {
+      "code": "GUARD_FAILED",
+      "retryable": false,
+      "userMessage": "This action is not allowed in the current state.",
+      "httpStatusHint": 409
+    },
+    {
+      "code": "NOT_AUTHORIZED",
+      "retryable": false,
+      "userMessage": "You are not permitted to perform this action.",
+      "httpStatusHint": 403
+    },
+    {
+      "code": "PERSISTENCE_UNAVAILABLE",
+      "retryable": true,
+      "userMessage": "We could not save your submission right now. Please try again shortly.",
+      "httpStatusHint": 503
+    }
+  ],
+  "timeoutMs": 5000
+}
