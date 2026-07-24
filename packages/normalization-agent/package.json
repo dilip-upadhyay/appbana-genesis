@@ -1,0 +1,37 @@
+{
+  "name": "@appbana/normalization-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BIM \u2192 AIM Normalization Agent. Consumes a validated BIM, invokes a structured-output AI adapter against the versioned `prompt.normalization-agent.bim-to-aim` template, validates the returned candidate against the AIM v0.1 JSON Schema, and records provenance for every call. Deterministic given the injected adapter + registry + schema.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@appbana/adapter-ai-contract": "file:../adapter-ai-contract",
+    "@appbana/ai-provenance-store": "file:../ai-provenance-store",
+    "@appbana/prompt-template-registry": "file:../prompt-template-registry",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
