@@ -1,0 +1,28 @@
+{
+  "$comment": "Prompt template registry v0.1. See ../README.md for the ref/version/hash contract. NEVER mutate an existing entry — bump the patch version instead.",
+  "registryVersion": "0.1",
+  "templates": [
+    {
+      "ref": "prompt.ba-agent.intake",
+      "version": "1.0.0",
+      "agent": "ba-agent",
+      "task": "intake",
+      "file": "ba-agent/intake.1.0.0.prompt.md",
+      "sha256": "sha256:e7c091593f150f6c9d85b073f06ada17c92fcb9bc82dac824f3f03d88e5e81cb",
+      "status": "active",
+      "createdAt": "2026-07-24",
+      "description": "BA agent conversational intake for Phase 1 Customer Onboarding."
+    },
+    {
+      "ref": "prompt.normalization-agent.bim-to-aim",
+      "version": "1.0.0",
+      "agent": "normalization-agent",
+      "task": "bim-to-aim",
+      "file": "normalization-agent/bim-to-aim.1.0.0.prompt.md",
+      "sha256": "sha256:30128bc927cba9b1f723437c51ca3e501d7f8cc58bcc0a20f65c338d63cd483e",
+      "status": "active",
+      "createdAt": "2026-07-24",
+      "description": "Deterministic BIM → AIM translation (structured-output response contract)."
+    }
+  ]
+}

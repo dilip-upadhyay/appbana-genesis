@@ -1,0 +1,32 @@
+{
+  "name": "@appbana/prompt-template-registry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Versioned, content-addressed registry for AI agent prompt templates. Provides a filesystem loader, a variable-substitution renderer, and a validator that fails CI when any (ref, version) referenced by an AIProvenanceRecord is deleted or mutated.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "prompt-registry-check": "dist/bin/check.js"
+  },
+  "files": ["dist", "prompts", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "check-registry": "node dist/bin/check.js prompts",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
