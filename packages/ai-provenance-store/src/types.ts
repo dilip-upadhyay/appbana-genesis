@@ -35,6 +35,8 @@ export interface StoredEntry {
 
 /** Filter accepted by `query` and `count`. All fields AND together. */
 export interface ProvenanceQuery {
+  /** Match `record.tenantId` exactly. */
+  readonly tenantId?: string;
   /** Match `record.requestingAgent` exactly. */
   readonly requestingAgent?: string;
   /** Match `record.modelBinding` exactly. */

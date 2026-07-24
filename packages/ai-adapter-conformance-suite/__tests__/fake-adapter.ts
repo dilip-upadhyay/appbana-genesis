@@ -75,7 +75,8 @@ export function makeFakeAdapter(
       const requestedAt = ctx.now().toISOString();
 
       const provenanceBase = {
-        aiProvenanceVersion: "0.1" as const,
+        aiProvenanceVersion: "0.2" as const,
+        tenantId: ctx.tenantId,
         modelBinding: binding,
         modelName: capabilities.modelName,
         modelVersion: capabilities.modelVersion,

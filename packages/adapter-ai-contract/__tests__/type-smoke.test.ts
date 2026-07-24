@@ -30,8 +30,8 @@ test("contract version is 0.1.0", () => {
   assert.equal(AI_ADAPTER_CONTRACT_VERSION, "0.1.0");
 });
 
-test("provenance envelope version is 0.1", () => {
-  assert.equal(AI_PROVENANCE_VERSION, "0.1");
+test("provenance envelope version is 0.2", () => {
+  assert.equal(AI_PROVENANCE_VERSION, "0.2");
 });
 
 test("five capability kinds are declared", () => {
@@ -104,7 +104,8 @@ test("a minimal AIModelAdapter compiles and can be instantiated", async () => {
       _ctx: AIInvocationContext,
     ): Promise<AIInvocationResult> {
       const provenance: AIProvenanceRecord = {
-        aiProvenanceVersion: "0.1",
+        aiProvenanceVersion: "0.2",
+        tenantId: "tenant.test",
         modelBinding: "ai:stub",
         modelName: "stub-model",
         modelVersion: "0.0.0",
@@ -173,7 +174,8 @@ test("a minimal AIModelAdapter compiles and can be instantiated", async () => {
   );
 
   assert.equal(result.outcome, "accepted");
-  assert.equal(result.provenance.aiProvenanceVersion, "0.1");
+  assert.equal(result.provenance.aiProvenanceVersion, "0.2");
+  assert.equal(result.provenance.tenantId, "tenant.test");
   assert.equal(result.provenance.tokenUsage.total, 0);
   assert.equal(result.correlationId, "00000000-0000-4000-8000-000000000000");
 });

@@ -6,10 +6,16 @@
  * failures. Nothing in the platform may consume a model output whose provenance is
  * missing or invalid; the ADR-017 governance gate (`check.ai-governance`) refuses
  * activation of any CAM whose latest AI-generated changes lack it.
+ *
+ * ## Version history
+ *
+ * - `0.2` (2026-07-25) — added required `tenantId` field so cost aggregation,
+ *   per-tenant retention, and enterprise multi-tenancy can key on provenance.
+ * - `0.1` (2026-07-24) — initial Phase 0 schema.
  */
 
 /** Wire version of the provenance record. Bump = ADR-015 amendment. */
-export const AI_PROVENANCE_VERSION = "0.1" as const;
+export const AI_PROVENANCE_VERSION = "0.2" as const;
 
 /** Redaction actions permitted before request inputs cross the adapter boundary. */
 export const aiRedactionActions = ["removed", "masked", "hashed", "truncated"] as const;
@@ -50,8 +56,16 @@ export interface AITokenUsage {
 }
 
 export interface AIProvenanceRecord {
-  /** Envelope version, currently `"0.1"`. */
+  /** Envelope version, currently `"0.2"`. */
   readonly aiProvenanceVersion: typeof AI_PROVENANCE_VERSION;
+
+  /**
+   * Tenant that owns the invocation, echoed from `AIInvocationContext.tenantId`.
+   * Required so cost aggregation, retention policies, and
+   * tenant-scoped queries can key on the record without joining against another
+   * table. Opaque string; never contains raw PII.
+   */
+  readonly tenantId: string;
 
   /** Adapter binding, e.g. `"ai:anthropic-claude"`. */
   readonly modelBinding: string;
@@ -61,9 +75,14 @@ export interface AIProvenanceRecord {
   /** Region where the call was actually served (may narrow the capability's `dataResidencyGuarantee`). */
   readonly modelProviderRegion?: string;
 
-  /** Prompt template ref, e.g. `"prompt.ba-agent.intake:v3"`. */
+  /**
+   * Prompt template ref in the bare form `prompt.<agent>.<task>` — do NOT append a
+   * `:v<n>` suffix. The version lives separately in `promptTemplateVersion` so
+   * `@appbana/prompt-template-registry`'s `${ref}@${version}` lookup key resolves.
+   * Example: `"prompt.ba-agent.intake"`.
+   */
   readonly promptTemplateRef: string;
-  /** Prompt template semver. */
+  /** Prompt template semver, e.g. `"1.0.0"`. */
   readonly promptTemplateVersion: string;
   /** `sha256:<hex>` of the resolved prompt text (post-variable-substitution). */
   readonly promptTemplateHash: string;

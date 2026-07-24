@@ -17,40 +17,34 @@ export function matchesFilter(
   filter: ProvenanceQuery | undefined,
 ): boolean {
   if (filter === undefined) return true;
+  return matchesRecordFields(entry, filter) && matchesInsertedRange(entry, filter);
+}
+
+function matchesRecordFields(
+  entry: StoredEntry,
+  filter: ProvenanceQuery,
+): boolean {
   const r = entry.record;
-  if (
-    filter.requestingAgent !== undefined &&
-    r.requestingAgent !== filter.requestingAgent
-  ) {
-    return false;
+  const checks: readonly [string | undefined, string | undefined][] = [
+    [filter.tenantId, r.tenantId],
+    [filter.requestingAgent, r.requestingAgent],
+    [filter.modelBinding, r.modelBinding],
+    [filter.modelName, r.modelName],
+    [filter.promptTemplateRef, r.promptTemplateRef],
+    [filter.promptTemplateVersion, r.promptTemplateVersion],
+  ];
+  for (const [expected, actual] of checks) {
+    if (expected !== undefined && actual !== expected) return false;
   }
-  if (
-    filter.modelBinding !== undefined &&
-    r.modelBinding !== filter.modelBinding
-  ) {
-    return false;
-  }
-  if (filter.modelName !== undefined && r.modelName !== filter.modelName) {
-    return false;
-  }
-  if (
-    filter.promptTemplateRef !== undefined &&
-    r.promptTemplateRef !== filter.promptTemplateRef
-  ) {
-    return false;
-  }
-  if (
-    filter.promptTemplateVersion !== undefined &&
-    r.promptTemplateVersion !== filter.promptTemplateVersion
-  ) {
-    return false;
-  }
-  if (filter.since !== undefined && entry.insertedAt < filter.since) {
-    return false;
-  }
-  if (filter.until !== undefined && entry.insertedAt > filter.until) {
-    return false;
-  }
+  return true;
+}
+
+function matchesInsertedRange(
+  entry: StoredEntry,
+  filter: ProvenanceQuery,
+): boolean {
+  if (filter.since !== undefined && entry.insertedAt < filter.since) return false;
+  if (filter.until !== undefined && entry.insertedAt > filter.until) return false;
   return true;
 }
 

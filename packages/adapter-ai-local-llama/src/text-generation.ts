@@ -179,6 +179,7 @@ async function* streamText(
           parseResponse: () => ({ outcome: "failed", diagnostics: [] }),
         },
         request,
+        tenantId: ctx.tenantId,
         redaction,
         tokenUsage: { input: 0, output: 0, total: 0 },
         outputText: "<contract-unsupported>",
@@ -233,6 +234,7 @@ async function* streamText(
       parseResponse: () => ({ outcome: "accepted", diagnostics: [] }),
     },
     request,
+    tenantId: ctx.tenantId,
     redaction,
     tokenUsage: {
       input: final.usage.prompt_tokens,

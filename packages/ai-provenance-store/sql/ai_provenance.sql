@@ -1,8 +1,8 @@
--- @appbana/ai-provenance-store — Postgres DDL v0.1
+-- @appbana/ai-provenance-store — Postgres DDL v0.2
 --
--- Ships now so ops can pre-provision the ai_provenance table; the Postgres
--- driver implementation is a v0.2 follow-up (blocked on the `pg` peer-dep
--- decision). The in-memory + JSONL backends are functionally complete.
+-- v0.2 adds required `tenant_id` column (mirrors record.tenantId, added in
+-- aiProvenanceVersion 0.2). No live records existed prior to this schema, so
+-- no data migration is needed.
 --
 -- CRITICAL: This table is APPEND-ONLY. No UPDATE, no DELETE.
 -- Enforced by:
@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS appbana.ai_provenance (
     -- Denormalized columns for common query paths. All source-of-truth values
     -- live inside `record` — these mirror-columns exist purely for indexes.
     ai_provenance_version     TEXT        NOT NULL,
+    tenant_id                 TEXT        NOT NULL,
     model_binding             TEXT        NOT NULL,
     model_name                TEXT        NOT NULL,
     model_version             TEXT        NOT NULL,
@@ -44,11 +45,17 @@ CREATE TABLE IF NOT EXISTS appbana.ai_provenance (
     CONSTRAINT ai_provenance_version_matches CHECK (
         record ->> 'aiProvenanceVersion' = ai_provenance_version
     ),
+    CONSTRAINT ai_provenance_tenant_matches CHECK (
+        record ->> 'tenantId' = tenant_id
+    ),
     CONSTRAINT ai_provenance_hash_prefix CHECK (id LIKE 'sha256:%')
 );
 
 CREATE INDEX IF NOT EXISTS ai_provenance_inserted_at_idx
     ON appbana.ai_provenance (inserted_at DESC);
+
+CREATE INDEX IF NOT EXISTS ai_provenance_tenant_id_idx
+    ON appbana.ai_provenance (tenant_id, inserted_at DESC);
 
 CREATE INDEX IF NOT EXISTS ai_provenance_requesting_agent_idx
     ON appbana.ai_provenance (requesting_agent, inserted_at DESC);

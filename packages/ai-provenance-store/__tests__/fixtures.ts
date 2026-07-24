@@ -8,7 +8,8 @@ export function makeRecord(
   overrides: Partial<AIProvenanceRecord> = {},
 ): AIProvenanceRecord {
   return {
-    aiProvenanceVersion: "0.1",
+    aiProvenanceVersion: "0.2",
+    tenantId: "tenant.test",
     modelBinding: "ai:local-llama",
     modelName: "llama-3.3-70b-instruct",
     modelVersion: "2025-01-15",

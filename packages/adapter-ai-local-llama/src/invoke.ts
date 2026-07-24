@@ -56,17 +56,18 @@ export async function llamaInvoke(
   internal: InvokeInternal,
 ): Promise<AIInvocationResult> {
   const { deps, request, ctx } = internal;
+  const tenantId = ctx.tenantId;
   const requestedAt = ctx.now();
 
   // 0. Refuse contracts this adapter did not declare support for.
-  const unsupported = unsupportedContractResult(deps, request, requestedAt);
+  const unsupported = unsupportedContractResult(deps, request, tenantId, requestedAt);
   if (unsupported !== undefined) {
     return unsupported;
   }
 
   // 1. Abort before doing anything expensive.
   if (ctx.signal?.aborted === true) {
-    return abortedResult(deps, request, requestedAt);
+    return abortedResult(deps, request, tenantId, requestedAt);
   }
 
   // 2. Redact inputs BEFORE any wire call — mandatory even for on-prem.
@@ -87,7 +88,7 @@ export async function llamaInvoke(
     request,
   });
   if (budgetOutcome !== undefined) {
-    return budgetOutcome(deps, request, redaction, requestedAt);
+    return budgetOutcome(deps, request, tenantId, redaction, requestedAt);
   }
 
   // 5. Fire.
@@ -109,7 +110,7 @@ export async function llamaInvoke(
       ctx.signal !== undefined ? { signal: ctx.signal } : undefined,
     );
   } catch (err) {
-    return failedResult(deps, request, redaction, requestedAt, ctx.now(), err);
+    return failedResult(deps, request, tenantId, redaction, requestedAt, ctx.now(), err);
   }
 
   // 6. Kind-specific response parsing.
@@ -120,6 +121,7 @@ export async function llamaInvoke(
   const provenance = buildProvenance({
     deps,
     request,
+    tenantId,
     redaction,
     tokenUsage: {
       input: response.usage.prompt_tokens,
@@ -155,6 +157,7 @@ interface BudgetInput {
 type BudgetFactory = (
   deps: LlamaInvokeDeps,
   request: AIInvocationRequest,
+  tenantId: string,
   redaction: RedactionResult,
   requestedAt: Date,
 ) => AIInvocationResult;
@@ -165,10 +168,11 @@ function budgetPreCheck(input: BudgetInput): BudgetFactory | undefined {
     estimateTokens(systemPrompt) + estimateTokens(userPrompt);
   const budgetMaxInput = request.budget.maxInputTokens;
   if (budgetMaxInput !== undefined && estimatedInput > budgetMaxInput) {
-    return (deps, req, redaction, requestedAt) =>
+    return (deps, req, tenantId, redaction, requestedAt) =>
       budgetExceededResult(
         deps,
         req,
+        tenantId,
         redaction,
         requestedAt,
         `estimated input tokens (${estimatedInput}) exceed budget.maxInputTokens (${budgetMaxInput})`,
@@ -185,10 +189,11 @@ function budgetPreCheck(input: BudgetInput): BudgetFactory | undefined {
       estimatedInput * capabilities.costPerInputToken +
       worstCaseOutput * capabilities.costPerOutputToken;
     if (worstCaseCost > request.budget.maxCostUsd) {
-      return (deps, req, redaction, requestedAt) =>
+      return (deps, req, tenantId, redaction, requestedAt) =>
         budgetExceededResult(
           deps,
           req,
+          tenantId,
           redaction,
           requestedAt,
           `worst-case cost ${worstCaseCost.toFixed(6)} USD exceeds budget.maxCostUsd (${request.budget.maxCostUsd})`,
@@ -213,6 +218,7 @@ function pickMaxTokens(
 function budgetExceededResult(
   deps: LlamaInvokeDeps,
   request: AIInvocationRequest,
+  tenantId: string,
   redaction: RedactionResult,
   requestedAt: Date,
   reason: string,
@@ -220,6 +226,7 @@ function budgetExceededResult(
   const provenance = buildProvenance({
     deps,
     request,
+    tenantId,
     redaction,
     tokenUsage: { input: 0, output: 0, total: 0 },
     outputText: "<budget-exceeded>",
@@ -240,6 +247,7 @@ function budgetExceededResult(
 function unsupportedContractResult(
   deps: LlamaInvokeDeps,
   request: AIInvocationRequest,
+  tenantId: string,
   requestedAt: Date,
 ): AIInvocationResult | undefined {
   const supported = deps.capabilities.supportedResponseContracts;
@@ -253,6 +261,7 @@ function unsupportedContractResult(
   const provenance = buildProvenance({
     deps,
     request,
+    tenantId,
     redaction,
     tokenUsage: { input: 0, output: 0, total: 0 },
     outputText: "<contract-unsupported>",
@@ -277,6 +286,7 @@ function unsupportedContractResult(
 function abortedResult(
   deps: LlamaInvokeDeps,
   request: AIInvocationRequest,
+  tenantId: string,
   requestedAt: Date,
   redaction?: RedactionResult,
 ): AIInvocationResult {
@@ -286,6 +296,7 @@ function abortedResult(
   const provenance = buildProvenance({
     deps,
     request,
+    tenantId,
     redaction: r,
     tokenUsage: { input: 0, output: 0, total: 0 },
     outputText: "<aborted>",
@@ -306,6 +317,7 @@ function abortedResult(
 function failedResult(
   deps: LlamaInvokeDeps,
   request: AIInvocationRequest,
+  tenantId: string,
   redaction: RedactionResult,
   requestedAt: Date,
   completedAt: Date,
@@ -315,6 +327,7 @@ function failedResult(
   const provenance = buildProvenance({
     deps,
     request,
+    tenantId,
     redaction,
     tokenUsage: { input: 0, output: 0, total: 0 },
     outputText: "<failed>",
@@ -335,6 +348,7 @@ function failedResult(
 interface BuildProvenanceInput {
   readonly deps: LlamaInvokeDeps;
   readonly request: AIInvocationRequest;
+  readonly tenantId: string;
   readonly redaction: RedactionResult;
   readonly tokenUsage: { input: number; output: number; total: number };
   readonly outputText: string;
@@ -345,7 +359,7 @@ interface BuildProvenanceInput {
 export function buildProvenance(
   input: BuildProvenanceInput,
 ): AIProvenanceRecord {
-  const { deps, request, redaction, tokenUsage, outputText, requestedAt, completedAt } =
+  const { deps, request, tenantId, redaction, tokenUsage, outputText, requestedAt, completedAt } =
     input;
   const wallClockMs = Math.max(
     0,
@@ -355,7 +369,8 @@ export function buildProvenance(
     deps.capabilities.dataResidencyGuarantee ??
     deps.capabilities.modelProviderRegion;
   const record: AIProvenanceRecord = {
-    aiProvenanceVersion: "0.1",
+    aiProvenanceVersion: "0.2",
+    tenantId,
     modelBinding: deps.capabilities.binding,
     modelName: deps.capabilities.modelName,
     modelVersion: deps.capabilities.modelVersion,

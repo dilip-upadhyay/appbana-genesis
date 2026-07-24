@@ -1,9 +1,14 @@
 # ADR-015: AI Model Adapter Layer & Provenance
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 2026-08-06 — provenance bumped to v0.2, adds required `tenantId`)
 - **Date:** 2026-07-24
 - **Deciders:** Dilip
 - **Consulted:** AI Agent team (BA Agent, Normalization Agent, CAM Generator), Governance team (ADR-017 pending), Security & Data-Residency team, Deployment team (ADR-016 pending)
+
+## Amendment 2026-08-06 — aiProvenanceVersion 0.2
+
+Bumped `aiProvenanceVersion` from `"0.1"` to `"0.2"`. Added required `tenantId` field to every provenance record. Rationale: multi-tenant deployments need tenant attribution at record-insert time for RLS enforcement, per-tenant cost aggregation, and forensic queries. Threading `tenantId` through `AIInvocationContext` was already required, so the addition is source-only — no live records existed prior to the bump, so no data migration is needed. Also fixed docstring examples that showed `promptTemplateRef` with an inline `:v<n>` suffix; the bare form `prompt.<agent>.<task>` is canonical and the version lives exclusively in `promptTemplateVersion`.
+
 
 ## Context and Problem Statement
 
@@ -113,7 +118,7 @@ The invocation request carries the resolved prompt template, the runtime inputs,
 
 ```ts
 export interface AIInvocationRequest {
-  readonly promptTemplateRef: string;                     // e.g. "prompt.ba-agent.intake:v3"
+  readonly promptTemplateRef: string;                     // bare form, e.g. "prompt.ba-agent.intake" — version lives in promptTemplateVersion
   readonly promptTemplateVersion: string;                 // semver — MUST match a registered template
   readonly inputs: Readonly<Record<string, unknown>>;     // template variables — hashed for provenance
   readonly responseContract: AIResponseContract;          // schema the output must match (structured kinds) or "free-text"
@@ -143,12 +148,13 @@ Adapters MUST NOT throw for expected failure modes (schema-invalid output, safet
 
 ```ts
 export interface AIProvenanceRecord {
-  readonly aiProvenanceVersion: "0.1";
+  readonly aiProvenanceVersion: "0.2";
+  readonly tenantId: string;                              // opaque tenant identifier; never contains raw PII
   readonly modelBinding: string;                          // adapter binding, e.g. "ai:anthropic-claude"
   readonly modelName: string;                             // vendor-canonical name, e.g. "claude-sonnet-4-5"
   readonly modelVersion: string;                          // vendor-published version string
   readonly modelProviderRegion?: string;                  // where the call was served (data residency)
-  readonly promptTemplateRef: string;                     // e.g. "prompt.ba-agent.intake:v3"
+  readonly promptTemplateRef: string;                     // bare form, e.g. "prompt.ba-agent.intake"
   readonly promptTemplateVersion: string;                 // semver
   readonly promptTemplateHash: string;                    // sha256 of the resolved prompt text (post-variable-substitution)
   readonly inputHash: string;                             // sha256 of a canonicalized inputs object

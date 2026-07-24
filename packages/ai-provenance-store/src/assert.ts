@@ -16,6 +16,7 @@ import { recordId } from "./hash.js";
 import { MissingProvenanceError, type StoredEntry } from "./types.js";
 
 const REQUIRED_STRING_FIELDS = [
+  "tenantId",
   "modelBinding",
   "modelName",
   "modelVersion",
@@ -47,9 +48,9 @@ export function assertProvenance(
     );
   }
 
-  if (p.aiProvenanceVersion !== "0.1") {
+  if (p.aiProvenanceVersion !== "0.2") {
     throw new MissingProvenanceError(
-      `unsupported aiProvenanceVersion "${p.aiProvenanceVersion}" (expected "0.1")`,
+      `unsupported aiProvenanceVersion "${p.aiProvenanceVersion}" (expected "0.2")`,
       { code: "PROVENANCE_VERSION_UNSUPPORTED" },
     );
   }

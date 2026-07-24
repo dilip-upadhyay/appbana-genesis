@@ -15,3 +15,16 @@ export { InMemoryAIProvenanceStore } from "./in-memory.js";
 export type { InMemoryStoreConfig } from "./in-memory.js";
 export { JsonlAIProvenanceStore } from "./jsonl.js";
 export type { JsonlStoreConfig } from "./jsonl.js";
+export { PostgresAIProvenanceStore } from "./postgres.js";
+export type { PgQueryable, PostgresStoreConfig } from "./postgres.js";
+export {
+  aggregateCostByTenantAndDay,
+  getBudgetRemaining,
+} from "./cost.js";
+export type {
+  BudgetStatus,
+  CostAggregationOptions,
+  CostCatalog,
+  CostCoefficients,
+  CostSummary,
+} from "./cost.js";

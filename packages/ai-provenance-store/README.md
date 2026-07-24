@@ -48,7 +48,7 @@ assertProvenance(result, stored); // throws MissingProvenanceError if missing/in
 `assertProvenance` verifies:
 
 1. `result.provenance` is present.
-2. Every mandatory field (`aiProvenanceVersion`, `modelName`, `modelVersion`, `promptTemplateRef`, `promptTemplateVersion`, `promptTemplateHash`, `inputHash`, `outputHash`, `requestingAgent`, `requestedAt`, `completedAt`, `wallClockMs`) is populated.
+2. Every mandatory field (`aiProvenanceVersion`, `tenantId`, `modelName`, `modelVersion`, `promptTemplateRef`, `promptTemplateVersion`, `promptTemplateHash`, `inputHash`, `outputHash`, `requestingAgent`, `requestedAt`, `completedAt`, `wallClockMs`) is populated.
 3. `stored.id` matches the sha-256 of the record just handed back — proving the store did not silently mutate.
 
 Failing any check throws `MissingProvenanceError` with an actionable diagnostic. The kernel treats this as fail-closed.

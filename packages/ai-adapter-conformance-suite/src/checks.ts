@@ -101,10 +101,11 @@ export function tierIncludes(
 // ---------------------------------------------------------------------------
 
 function validateProvenanceShape(p: AIProvenanceRecord): string | undefined {
-  if (p.aiProvenanceVersion !== "0.1") {
-    return `aiProvenanceVersion must be "0.1", got ${JSON.stringify(p.aiProvenanceVersion)}`;
+  if (p.aiProvenanceVersion !== "0.2") {
+    return `aiProvenanceVersion must be "0.2", got ${JSON.stringify(p.aiProvenanceVersion)}`;
   }
   const requiredStrings: readonly (keyof AIProvenanceRecord)[] = [
+    "tenantId",
     "modelBinding",
     "modelName",
     "modelVersion",

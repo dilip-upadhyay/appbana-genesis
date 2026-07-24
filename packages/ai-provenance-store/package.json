@@ -2,7 +2,7 @@
   "name": "@appbana/ai-provenance-store",
   "version": "0.1.0",
   "private": true,
-  "description": "Append-only store for AIProvenanceRecord. Provides a portable interface + two reference backends (in-memory and JSONL-file) + a kernel-side `assertProvenance` guard that refuses AI outputs without a valid provenance record. Postgres DDL shipped as ops artifact; driver is v0.2.",
+  "description": "Append-only store for AIProvenanceRecord. Ships an in-memory backend, a JSONL file backend, and a Postgres backend (requires the optional `pg` peer dep). Includes a kernel-side `assertProvenance` guard that refuses AI outputs without a valid provenance record.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,11 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "sql", "README.md"],
+  "files": [
+    "dist",
+    "sql",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
@@ -23,8 +27,23 @@
     "@appbana/adapter-ai-contract": "file:../adapter-ai-contract"
   },
   "devDependencies": {
+    "@appbana/prompt-template-registry": "file:../prompt-template-registry",
+    "@appbana/security-redaction": "file:../security-redaction",
     "@types/node": "^22.9.0",
+    "@types/pg": "^8.20.0",
+    "pg-mem": "^3.0.14",
     "rimraf": "^6.0.1",
     "typescript": "5.6.3"
+  },
+  "optionalDependencies": {
+    "pg": "^8.22.0"
+  },
+  "peerDependencies": {
+    "pg": "^8.13.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    }
   }
 }
