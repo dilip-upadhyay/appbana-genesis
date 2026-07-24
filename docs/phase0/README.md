@@ -16,7 +16,7 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 | [ADR-013 Runtime engine contract](../adr/ADR-013-runtime-engine-contract.md) | ✅ Accepted | Dilip |
 | [ADR-014 Technology adapter contract](../adr/ADR-014-technology-adapter-contract.md) | ✅ Accepted | Dilip |
 | [ADR-015 AI model adapter layer](../adr/ADR-015-ai-model-adapter-layer.md) | ✅ Accepted | Dilip |
-| [ADR-016 Deployment packaging](../adr/ADR-016-deployment-packaging.md) | ⏳ Proposed | _TBD_ |
+| [ADR-016 Deployment packaging](../adr/ADR-016-deployment-packaging.md) | ✅ Accepted | Dilip |
 | [ADR-017 Governance publication gate](../adr/ADR-017-governance-publication-gate.md) | ⏳ Proposed | _TBD_ |
 
 ### WS-0.2 Schema Definitions
