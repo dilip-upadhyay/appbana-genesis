@@ -1,0 +1,37 @@
+{
+  "name": "@appbana/adapter-ai-contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Model Adapter contract — TypeScript types and runtime tags implementing ADR-015. This package is the single dependency every AI adapter and every agent shares.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test --experimental-strip-types __tests__/type-smoke.test.ts",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

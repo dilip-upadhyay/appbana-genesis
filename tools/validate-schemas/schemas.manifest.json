@@ -37,6 +37,14 @@
         "examples/customer-onboarding/trace-events/event.adapter.applied.json",
         "examples/customer-onboarding/trace-events/event.rule.fired.json"
       ]
+    },
+    {
+      "name": "AI Adapter Manifest v0.1 — Phase 1 reference adapters",
+      "schema": "docs/schemas/ai-adapter-manifest.v0.1.schema.json",
+      "examples": [
+        "examples/customer-onboarding/ai-adapter-manifests/anthropic-claude.manifest.json",
+        "examples/customer-onboarding/ai-adapter-manifests/local-llama.manifest.json"
+      ]
     }
   ]
 }

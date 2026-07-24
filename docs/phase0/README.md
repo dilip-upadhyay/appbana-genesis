@@ -17,7 +17,7 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 | [ADR-014 Technology adapter contract](../adr/ADR-014-technology-adapter-contract.md) | ✅ Accepted | Dilip |
 | [ADR-015 AI model adapter layer](../adr/ADR-015-ai-model-adapter-layer.md) | ✅ Accepted | Dilip |
 | [ADR-016 Deployment packaging](../adr/ADR-016-deployment-packaging.md) | ✅ Accepted | Dilip |
-| [ADR-017 Governance publication gate](../adr/ADR-017-governance-publication-gate.md) | ⏳ Proposed | _TBD_ |
+| [ADR-017 Governance publication gate](../adr/ADR-017-governance-publication-gate.md) | ✅ Accepted | Dilip |
 
 ### WS-0.2 Schema Definitions
 
@@ -66,8 +66,10 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 
 ## Phase 0 Exit Criteria
 
-- [ ] All 7 ADRs (011–017) approved
-- [ ] All 5 schemas v0.1 published
-- [ ] Repo scaffold builds and CI is green
-- [ ] Customer Onboarding reference artifacts validate cleanly
-- [ ] Phase 1 backlog is executable (each task has acceptance criteria and estimate)
+- [x] All 7 ADRs (011–017) approved
+- [x] All 5 schemas v0.1 published
+- [x] Repo scaffold builds and CI is green
+- [x] Customer Onboarding reference artifacts validate cleanly
+- [x] Phase 1 backlog is executable (each task has acceptance criteria and estimate) — see [Phase 1 tracker](../phase1/README.md)
+
+**✅ Phase 0 CLOSED — 2026-07-24.** All exit criteria met.

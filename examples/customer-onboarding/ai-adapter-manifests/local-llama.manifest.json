@@ -1,0 +1,54 @@
+{
+  "$comment": "Fixture: manifest for the local Llama reference adapter (air-gapped + on-prem path). Ships text-generation and structured-output against a locally hosted Llama 3.3 70B via llama.cpp/vLLM. requiresNetwork=false and egressesInputsToThirdParty=false let this adapter pass the ADR-016 air-gapped invariant check.",
+
+  "aiAdapterManifestVersion": "0.1",
+  "packageName": "@appbana/adapter-ai-local-llama",
+  "packageVersion": "0.1.0",
+  "description": "AI model adapter for a locally hosted Llama 3.3 70B instance served via llama.cpp or vLLM. Runs entirely in-cluster with no outbound network calls; certified for use in air-gapped deployment mode.",
+  "licenseSpdx": "UNLICENSED",
+
+  "adapters": [
+    {
+      "id": "text-generation",
+      "kind": "text-generation",
+      "binding": "ai:local-llama",
+      "modelName": "llama-3.3-70b-instruct",
+      "modelVersion": "2026-05-release",
+      "supportedResponseContracts": ["free-text"],
+      "maxContextTokens": 128000,
+      "maxOutputTokens": 4096,
+      "supportsStreaming": true,
+      "supportsToolUse": false,
+      "supportsStructuredOutput": false,
+      "supportsDeterminismHint": true,
+      "requiresNetwork": false,
+      "egressesInputsToThirdParty": false,
+      "dataResidencyGuarantee": "on-prem",
+      "conformanceTier": "A",
+      "capabilityTags": ["provider:local", "modality:text", "hosting:in-cluster"],
+      "adapterVersion": "0.1.0",
+      "minPlatformKernelVersion": "0.1.0"
+    },
+    {
+      "id": "structured-output",
+      "kind": "structured-output",
+      "binding": "ai:local-llama-json",
+      "modelName": "llama-3.3-70b-instruct",
+      "modelVersion": "2026-05-release",
+      "supportedResponseContracts": ["json-schema"],
+      "maxContextTokens": 128000,
+      "maxOutputTokens": 4096,
+      "supportsStreaming": false,
+      "supportsToolUse": false,
+      "supportsStructuredOutput": true,
+      "supportsDeterminismHint": true,
+      "requiresNetwork": false,
+      "egressesInputsToThirdParty": false,
+      "dataResidencyGuarantee": "on-prem",
+      "conformanceTier": "A",
+      "capabilityTags": ["provider:local", "modality:text", "output:json-schema", "hosting:in-cluster"],
+      "adapterVersion": "0.1.0",
+      "minPlatformKernelVersion": "0.1.0"
+    }
+  ]
+}

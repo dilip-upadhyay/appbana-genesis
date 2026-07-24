@@ -130,15 +130,15 @@ No CAM version activates in production without passing:
 
 | Phase | Status | Key Deliverable |
 |---|---|---|
-| Phase 0 — Foundation | 🟡 In Progress | ADRs locked, schemas published, CI green, Customer Onboarding reference artifacts validated |
-| Phase 1 — AI Intake + Minimal Runtime | ⏳ Not started | Chat → running form in <15 min, zero page-specific code |
+| Phase 0 — Foundation | ✅ Complete (2026-07-24) | ADRs 011–017 accepted, 5 schemas published, Customer Onboarding reference artifacts validated, Phase 1 backlog published |
+| Phase 1 — AI Intake + Minimal Runtime | 🟡 In Progress | Chat → running form in <15 min, zero page-specific code |
 | Phase 2 — Full Application Slice | ⏳ Not started | Customer Onboarding as full enterprise app, 100 concurrent users |
 | Phase 3 — Multi-modal + Expense Approval | ⏳ Not started | Expense Approval with zero platform code changes |
 | Phase 4 — Integration + Java Adapter | ⏳ Not started | Same CAM → Node.js and Java deployments, identical behavior |
 | Phase 5 — Deployment & On-Premises | ⏳ Not started | Air-gapped install, identical across 3 deployment modes |
 | Phase 6 — Productization | ⏳ Not started | 2 design partners in production |
 
-**Current focus:** Phase 0 — WS-0.2 schemas and WS-0.4 Customer Onboarding reference artifacts are next.
+**Current focus:** Phase 1 — WS-1.1 (Conversational BA Agent) and WS-1.2 (AI Model Adapter Layer) are the immediate priorities. See [Phase 1 tracker](../docs/phase1/README.md).
 
 ## Workstream Tracking
 

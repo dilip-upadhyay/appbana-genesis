@@ -1,0 +1,281 @@
+{
+  "$id": "https://appbana.io/schemas/ai-adapter-manifest.v0.1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Adapter Manifest v0.1",
+  "description": "Machine-readable declaration of one AI adapter package. Every @appbana/adapter-ai-<name> npm package MUST ship a manifest conforming to this schema at `ai-manifest.json` in the package root. The manifest is the substrate the platform kernel reads at load time to (a) verify deployment-mode invariants (ADR-016), (b) resolve the `aiRouting` map (ADR-015), and (c) feed the governance publication gate (ADR-017 `check.ai-governance`).",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": [
+    "aiAdapterManifestVersion",
+    "packageName",
+    "packageVersion",
+    "description",
+    "adapters"
+  ],
+
+  "properties": {
+    "$comment": { "type": "string" },
+
+    "aiAdapterManifestVersion": {
+      "description": "Envelope version. Currently the only permitted value is `0.1`.",
+      "const": "0.1"
+    },
+
+    "packageName": {
+      "description": "npm package name. MUST match the package.json `name` field.",
+      "type": "string",
+      "pattern": "^@appbana/adapter-ai-[a-z][a-z0-9-]*$"
+    },
+
+    "packageVersion": {
+      "description": "npm package semver. MUST match package.json `version` field.",
+      "$ref": "#/$defs/semver"
+    },
+
+    "description": {
+      "description": "Human-readable one-paragraph summary. Displayed by the operator dashboard.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+
+    "homepage": {
+      "description": "Optional URL to the adapter's documentation.",
+      "type": "string",
+      "format": "uri"
+    },
+
+    "licenseSpdx": {
+      "description": "SPDX license identifier for this adapter package.",
+      "type": "string",
+      "minLength": 1
+    },
+
+    "adapters": {
+      "description": "One or more adapters exported by this package. A single package MAY declare multiple adapters (e.g., text-generation + structured-output for the same underlying model) but each `(kind, binding)` pair MUST be unique within the manifest.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/adapterDeclaration" }
+    },
+
+    "conformanceEvidence": {
+      "description": "Optional references to conformance suite reports. When absent, the adapter has not published tier evidence and platform operators MUST treat it as unverified regardless of the tier declared in each adapter entry.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/conformanceEvidenceEntry" }
+    }
+  },
+
+  "$defs": {
+    "semver": {
+      "description": "Semantic version per semver.org. Pre-release identifiers allowed.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"
+    },
+
+    "aiCapabilityKind": {
+      "description": "Five AI adapter kinds from ADR-015.",
+      "enum": [
+        "text-generation",
+        "structured-output",
+        "embedding",
+        "speech-to-text",
+        "vision"
+      ]
+    },
+
+    "aiResponseContractKind": {
+      "enum": [
+        "free-text",
+        "json-schema",
+        "tool-use",
+        "embedding-vector",
+        "transcript"
+      ]
+    },
+
+    "aiConformanceTier": {
+      "description": "C = Runnable; B = Production-viable; A = Regulated-workload. See ADR-015 § Conformance Tiers.",
+      "enum": ["A", "B", "C"]
+    },
+
+    "region": {
+      "description": "Cloud provider region identifier or on-prem site tag. No canonical registry; matched string-equal against tenant policy.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+
+    "capabilityTag": {
+      "description": "Free-form capability tag. Consumed by future prompt-template routing or governance checks. Namespaced with `<facet>:<value>` recommended.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?::[a-z0-9][a-z0-9-]*)*$"
+    },
+
+    "adapterDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "id",
+        "kind",
+        "binding",
+        "modelName",
+        "modelVersion",
+        "supportedResponseContracts",
+        "maxContextTokens",
+        "maxOutputTokens",
+        "supportsStreaming",
+        "supportsToolUse",
+        "supportsStructuredOutput",
+        "supportsDeterminismHint",
+        "requiresNetwork",
+        "egressesInputsToThirdParty",
+        "conformanceTier",
+        "adapterVersion",
+        "minPlatformKernelVersion"
+      ],
+
+      "properties": {
+        "$comment": { "type": "string" },
+
+        "id": {
+          "description": "Package-unique adapter identifier. Used by the platform to disambiguate multiple adapters exported by the same package.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)*$",
+          "minLength": 1,
+          "maxLength": 200
+        },
+
+        "kind": { "$ref": "#/$defs/aiCapabilityKind" },
+
+        "binding": {
+          "description": "Binding string matched against the deployment's `aiRouting` map. MUST start with `ai:`.",
+          "type": "string",
+          "pattern": "^ai:[a-z][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)*$"
+        },
+
+        "modelName": {
+          "description": "Vendor-canonical model name. Persisted verbatim on every AIProvenanceRecord.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+
+        "modelVersion": {
+          "description": "Vendor-published model version string. Free-form (vendors do not standardize).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+
+        "modelProviderRegion": { "$ref": "#/$defs/region" },
+
+        "supportedResponseContracts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/aiResponseContractKind" }
+        },
+
+        "maxContextTokens": { "type": "integer", "minimum": 1 },
+        "maxOutputTokens": { "type": "integer", "minimum": 1 },
+
+        "supportsStreaming": { "type": "boolean" },
+        "supportsToolUse": { "type": "boolean" },
+        "supportsStructuredOutput": { "type": "boolean" },
+        "supportsDeterminismHint": { "type": "boolean" },
+
+        "requiresNetwork": {
+          "description": "MUST be `false` for adapters usable in air-gapped deployment mode (ADR-016 invariant table).",
+          "type": "boolean"
+        },
+
+        "egressesInputsToThirdParty": {
+          "description": "MUST be `false` for adapters usable when tenant policy sets `allowThirdPartyModelEgress: false` (ADR-015).",
+          "type": "boolean"
+        },
+
+        "dataResidencyGuarantee": {
+          "description": "Region guarantee for served calls; matched string-equal against `tenantAIPolicy.dataResidencyRequired`.",
+          "$ref": "#/$defs/region"
+        },
+
+        "costPerInputToken": { "type": "number", "minimum": 0, "maximum": 1 },
+        "costPerOutputToken": { "type": "number", "minimum": 0, "maximum": 1 },
+        "rateLimitTokensPerMinute": { "type": "integer", "minimum": 1 },
+
+        "conformanceTier": { "$ref": "#/$defs/aiConformanceTier" },
+
+        "capabilityTags": {
+          "description": "Optional free-form capability tags. Governance policies may filter on these.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/capabilityTag" }
+        },
+
+        "adapterVersion": {
+          "description": "Semver of the concrete adapter class, independent of the package version. Persisted verbatim on every AIProvenanceRecord.",
+          "$ref": "#/$defs/semver"
+        },
+
+        "minPlatformKernelVersion": {
+          "description": "Minimum semver of the platform kernel this adapter is known to work against.",
+          "$ref": "#/$defs/semver"
+        }
+      },
+
+      "allOf": [
+        {
+          "$comment": "Consistency: kind == structured-output implies supportsStructuredOutput MUST be true.",
+          "if": { "properties": { "kind": { "const": "structured-output" } }, "required": ["kind"] },
+          "then": { "properties": { "supportsStructuredOutput": { "const": true } } }
+        },
+        {
+          "$comment": "Consistency: an adapter that requires no network cannot egress inputs to a third party.",
+          "if": { "properties": { "requiresNetwork": { "const": false } }, "required": ["requiresNetwork"] },
+          "then": { "properties": { "egressesInputsToThirdParty": { "const": false } } }
+        },
+        {
+          "$comment": "Consistency: cost fields must both be present or both absent (required for budget enforcement).",
+          "if": { "required": ["costPerInputToken"] },
+          "then": { "required": ["costPerOutputToken"] }
+        },
+        {
+          "if": { "required": ["costPerOutputToken"] },
+          "then": { "required": ["costPerInputToken"] }
+        }
+      ]
+    },
+
+    "conformanceEvidenceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "suiteVersion", "reportUri", "attestedAt"],
+      "properties": {
+        "$comment": { "type": "string" },
+        "tier": { "$ref": "#/$defs/aiConformanceTier" },
+        "suiteVersion": {
+          "description": "Semver of the @appbana/ai-adapter-conformance-suite the report was produced against.",
+          "$ref": "#/$defs/semver"
+        },
+        "reportUri": {
+          "description": "URI to the signed JSON report. Same-cluster paths (`file://`, `oci://`) are permitted so this manifest remains meaningful in air-gapped mode.",
+          "type": "string",
+          "format": "uri-reference",
+          "minLength": 1
+        },
+        "attestedAt": {
+          "description": "ISO-8601 UTC timestamp of the run that produced the report.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "attestedBy": {
+          "description": "Opaque identifier for the attesting party (CI job id, third-party auditor id, etc.). MUST NOT contain PII.",
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}

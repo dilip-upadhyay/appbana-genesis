@@ -1,0 +1,73 @@
+{
+  "$comment": "Fixture: manifest for the Anthropic Claude reference adapter (SaaS + dedicated-cloud path). Ships two adapter declarations from one package: text-generation and structured-output — both bound to the same underlying model. Refused in air-gapped mode by requiresNetwork=true and by egressesInputsToThirdParty=true.",
+
+  "aiAdapterManifestVersion": "0.1",
+  "packageName": "@appbana/adapter-ai-anthropic-claude",
+  "packageVersion": "0.1.0",
+  "description": "AI model adapter for Anthropic Claude via the Messages API. Provides both text-generation and structured-output capabilities against Claude Sonnet 4.5. Suitable for SaaS and dedicated-cloud deployment modes; refused in air-gapped mode.",
+  "homepage": "https://appbana.io/adapters/ai-anthropic-claude",
+  "licenseSpdx": "UNLICENSED",
+
+  "adapters": [
+    {
+      "id": "text-generation",
+      "kind": "text-generation",
+      "binding": "ai:anthropic-claude",
+      "modelName": "claude-sonnet-4-5",
+      "modelVersion": "2026-06",
+      "modelProviderRegion": "us-east-1",
+      "supportedResponseContracts": ["free-text", "tool-use"],
+      "maxContextTokens": 200000,
+      "maxOutputTokens": 8192,
+      "supportsStreaming": true,
+      "supportsToolUse": true,
+      "supportsStructuredOutput": false,
+      "supportsDeterminismHint": false,
+      "requiresNetwork": true,
+      "egressesInputsToThirdParty": true,
+      "dataResidencyGuarantee": "us-east-1",
+      "costPerInputToken": 0.000003,
+      "costPerOutputToken": 0.000015,
+      "rateLimitTokensPerMinute": 500000,
+      "conformanceTier": "C",
+      "capabilityTags": ["provider:anthropic", "modality:text", "tier:frontier"],
+      "adapterVersion": "0.1.0",
+      "minPlatformKernelVersion": "0.1.0"
+    },
+    {
+      "id": "structured-output",
+      "kind": "structured-output",
+      "binding": "ai:anthropic-claude-json",
+      "modelName": "claude-sonnet-4-5",
+      "modelVersion": "2026-06",
+      "modelProviderRegion": "us-east-1",
+      "supportedResponseContracts": ["json-schema"],
+      "maxContextTokens": 200000,
+      "maxOutputTokens": 8192,
+      "supportsStreaming": false,
+      "supportsToolUse": false,
+      "supportsStructuredOutput": true,
+      "supportsDeterminismHint": false,
+      "requiresNetwork": true,
+      "egressesInputsToThirdParty": true,
+      "dataResidencyGuarantee": "us-east-1",
+      "costPerInputToken": 0.000003,
+      "costPerOutputToken": 0.000015,
+      "rateLimitTokensPerMinute": 500000,
+      "conformanceTier": "C",
+      "capabilityTags": ["provider:anthropic", "modality:text", "output:json-schema"],
+      "adapterVersion": "0.1.0",
+      "minPlatformKernelVersion": "0.1.0"
+    }
+  ],
+
+  "conformanceEvidence": [
+    {
+      "tier": "C",
+      "suiteVersion": "0.1.0",
+      "reportUri": "oci://registry.internal/appbana/conformance-reports/adapter-ai-anthropic-claude/0.1.0-tierC.json",
+      "attestedAt": "2026-07-24T09:00:00Z",
+      "attestedBy": "ci:appbana-genesis/adapter-ai-anthropic-claude#1234"
+    }
+  ]
+}
