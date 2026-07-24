@@ -1,0 +1,32 @@
+{
+  "name": "@appbana/metadata-registry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Append-only, content-addressed store for BIM/AIM/CAM triples. Every artifact is keyed by sha-256 of its canonicalised bytes. `record()` is idempotent (same bytes → same id → dedupe). Reads recompute the content hash and throw ContentHashMismatchError on drift, providing tamper detection. Ships InMemoryMetadataRegistry (tests), JsonlMetadataRegistry (durable, air-gapped), and PostgresMetadataRegistry (production, `pg` optional peer dep). Includes `verifyProvenanceChain(bim, aim, cam)` that ties the WS-1.3 pipeline together.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "sql",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "pg-mem": "^3.0.4",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
