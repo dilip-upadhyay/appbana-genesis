@@ -1,0 +1,32 @@
+{
+  "name": "@appbana/governance-validator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Governance Publication Gate (ADR-017) — Phase 1 subset. Composes 10 independently-versioned GateCheck plugins, runs them against a staged CAM, and produces a canonicalised, content-addressed GateReport. Phase 1 ships two real checks (schema-validation, operation-contract-validation); the other eight return a phase-1 stub verdict. Waivers are forbidden for check.schema-validation and check.runtime-compatibility (enforced at waiver-admission time, not policy).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
