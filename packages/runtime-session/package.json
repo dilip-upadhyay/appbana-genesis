@@ -1,0 +1,34 @@
+{
+  "name": "@appbana/runtime-session",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AppBana Genesis runtime session lifecycle — startSession(appId, principal) → sessionId with persistent session state and graceful shutdown that flushes buffered trace events. Phase 1 scope (WS-1.4 Task 2): composes @appbana/platform-kernel's resolveCam() with an injected session store and trace sink; emits session-lifecycle trace events (event.session.started / event.session.state.updated / event.session.ended / event.session.aborted).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@appbana/metadata-registry": "file:../metadata-registry",
+    "@appbana/platform-kernel": "file:../platform-kernel"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
