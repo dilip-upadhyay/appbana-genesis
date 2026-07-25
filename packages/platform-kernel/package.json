@@ -1,0 +1,33 @@
+{
+  "name": "@appbana/platform-kernel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AppBana Genesis platform kernel — coordinates artifact resolution, session lifecycle, event bus, and effect dispatch across the runtime engines. Phase 1 scope (WS-1.4 Task 1): in-process Governance Registry that stores active-version pointers per (appId, tenantId), `resolveCam(appId, tenantId)` that chains pointer lookup + metadata-registry fetch + content-hash integrity check, and `buildVersionInfo()` for the /version endpoint per ADR-016.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@appbana/metadata-registry": "file:../metadata-registry"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
