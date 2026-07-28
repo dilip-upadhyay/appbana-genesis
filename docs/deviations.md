@@ -19,7 +19,7 @@ This file exists because the project repeatedly resolved such gaps by quietly ed
 | [DEV-003](#dev-003) | 8 of 10 governance gate checks are unconditional stubs | High | open | Phase 2 |
 | [DEV-004](#dev-004) | ADR-013 `Omit` on a union does not distribute | Low | accepted | — |
 | [DEV-005](#dev-005) | No schema→TypeScript codegen anywhere in the repo | High | open | Phase 2 |
-| [DEV-006](#dev-006) | AIM cannot express screens, sections, or layout | Critical | open | Phase 1 |
+| [DEV-006](#dev-006) | AIM cannot express screens, sections, or layout | Critical | open — [ADR-018](adr/ADR-018-presentation-intent-ownership.md) proposed | Phase 1 |
 | [DEV-007](#dev-007) | AIM has no index, metric, or event-kind concept | High | open | Phase 2 |
 | [DEV-008](#dev-008) | `create-customer-record` effect lost at the AIM→CAM boundary | High | open | Phase 1 |
 | [DEV-009](#dev-009) | ABAC id scheme diverges between generator and reference CAM | Medium | open | Phase 1 |
@@ -108,7 +108,9 @@ Verified by `packages/canonical-application-generator/__tests__/roundtrip.test.t
 
 This is the largest structural hole in the BIM → AIM → CAM chain, and it directly blocks the Phase 1 exit criterion of turning a conversation into a usable form.
 
-**Resolution:** AIM v0.2 needs a presentation-intent concept, or the CAM generator needs a documented layout-inference strategy. This is an ADR-worthy decision, not an implementation detail.
+**Resolution:** [ADR-018 — Ownership of Presentation Intent](adr/ADR-018-presentation-intent-ownership.md), status **Proposed** (2026-08-06). Presentation intent is intent, so it belongs in the intent chain: BIM v0.2 gains prose `userJourneys[]`, AIM v0.2 gains a medium-neutral `interactionFlows[]` (`step`/`group`, deliberately not `screen`/`section`, so the model survives a move to voice or batch), and the generator is demoted from author to pure projection. The load-bearing part is the `origin` discriminator — `stated | agent-proposed | derived-default` — because the platform *is* allowed to propose a layout the user never described, but is not allowed to do so silently. Rollout is two-stage: optional in AIM v0.2 with an error-severity `CAM_GEN_INTERACTION_FLOWS_MISSING` diagnostic and a `generator-fallback` stamp the governance gate blocks outside `dev`; required in AIM v1.0.
+
+This deviation stays **open** until the ADR is Accepted *and* the 29 `aim-model-gap` entries are gone from the `KNOWN_GAPS` registry. The round-trip test's stale-gap-id guard will fail if they are removed prematurely, which is the intended enforcement.
 
 ---
 

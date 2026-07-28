@@ -24,6 +24,7 @@ We use a lightweight [MADR](https://adr.github.io/madr/)-style format. See [`000
 | [ADR-015](ADR-015-ai-model-adapter-layer.md) | AI Model Adapter Layer & Provenance | Accepted |
 | [ADR-016](ADR-016-deployment-packaging.md) | Deployment Packaging (Kubernetes-first) | Accepted |
 | [ADR-017](ADR-017-governance-publication-gate.md) | Governance Publication Gate & Rollback | Accepted |
+| [ADR-018](ADR-018-presentation-intent-ownership.md) | Ownership of Presentation Intent | Proposed |
 
 > ADR-001 through ADR-010 are reserved for earlier decisions from the pre-Genesis interaction-runtime phase and will be back-filled or marked as superseded.
 
