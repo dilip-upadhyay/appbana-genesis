@@ -129,6 +129,14 @@ function makeCtx(tenantId: string, tickMs: number): AIInvocationContext {
   let counter = 0;
   return {
     tenantId,
+    appId: "app.customer-onboarding",
+    camId: "cam.customer-onboarding",
+    camVersion: "1.0.0",
+    environment: "dev",
+    traceContext: {
+      traceId: "4bf92f3577b34da6a3ce929d0e0e4736",
+      spanId: "00f067aa0ba902b7",
+    },
     now: () => new Date(Date.UTC(2026, 6, 24, 12, 0, counter++ * tickMs)),
   };
 }
@@ -190,7 +198,8 @@ test("end-to-end: JSONL store round-trip + query by tenantId", async () => {
       }
     }
 
-    await store.close?.();
+    // JsonlAIProvenanceStore appends per write and holds no file handle, so
+    // there is nothing to close before re-opening cold.
 
     // Re-open cold — proves durability + hash-content-addressing.
     const reopened = await JsonlAIProvenanceStore.open({ filePath: path });
@@ -204,7 +213,6 @@ test("end-to-end: JSONL store round-trip + query by tenantId", async () => {
     // Distinct prompt refs across both tenants = 2.
     const refs = await reopened.listReferencedPromptVersions();
     assert.equal(refs.length, 2);
-    await reopened.close?.();
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

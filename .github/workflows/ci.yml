@@ -22,7 +22,13 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      # Build MUST run before Test. Every package's test suite imports from
+      # `dist/`, so a fresh checkout has nothing to test against until the
+      # workspace is built in topological order.
+      - name: Build
+        run: pnpm build
 
       - name: Lint
         run: pnpm lint
@@ -32,9 +38,6 @@ jobs:
 
       - name: Test
         run: pnpm test
-
-      - name: Build
-        run: pnpm build
 
   schema-validate:
     runs-on: ubuntu-latest
@@ -51,7 +54,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Validate JSON Schemas against reference artifacts
         run: pnpm validate:schemas

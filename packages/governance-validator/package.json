@@ -19,13 +19,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "lint": "eslint .",
+    "test": "pnpm run build && node --test --experimental-strip-types \"__tests__/*.test.ts\"",
     "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
     "rimraf": "^6.0.1",
     "typescript": "5.6.3"
   }

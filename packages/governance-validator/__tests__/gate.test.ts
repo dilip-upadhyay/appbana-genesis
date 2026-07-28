@@ -52,7 +52,7 @@ function buildRegistry(cam: JsonObject): Map<string, JsonObject> {
       outputSchema: { type: "object" },
       sideEffects: deepClone((op["sideEffects"] as unknown[]) ?? []),
       auditEvent: op["auditEvent"] ?? "unknown",
-    } as JsonObject);
+    } as unknown as JsonObject);
   }
   return registry;
 }

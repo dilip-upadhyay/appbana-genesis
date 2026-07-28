@@ -41,10 +41,21 @@ export interface SessionLifecycleDeps {
   readonly eventIdGenerator?: () => string;
 }
 
-let counter = 0;
-function defaultId(prefix: string): string {
-  counter += 1;
-  return `${prefix}-${Date.now().toString(36)}-${counter.toString(36)}`;
+/**
+ * Builds the fallback id generator used when the caller injects none.
+ *
+ * Two properties matter here (ADR-013):
+ *  - time comes from the *injected* clock, so a frozen clock produces stable
+ *    ids and a test can assert on them;
+ *  - the counter is scoped to the returned closure, so two `SessionLifecycle`
+ *    instances never share mutable state.
+ */
+function createDefaultIdGenerator(now: () => Date): (prefix: string) => string {
+  let counter = 0;
+  return (prefix: string): string => {
+    counter += 1;
+    return `${prefix}-${now().getTime().toString(36)}-${counter.toString(36)}`;
+  };
 }
 
 export class SessionLifecycle {
@@ -64,6 +75,7 @@ export class SessionLifecycle {
     this.camCache = deps.camCache;
     this.traceSink = deps.traceSink;
     this.now = deps.now ?? (() => new Date());
+    const defaultId = createDefaultIdGenerator(this.now);
     this.nextSessionId = deps.sessionIdGenerator ?? (() => defaultId("session"));
     this.nextEventId = deps.eventIdGenerator ?? (() => defaultId("evt"));
   }

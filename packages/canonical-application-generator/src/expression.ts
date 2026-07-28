@@ -9,7 +9,8 @@
  */
 
 import { CAM_GEN_DIAGNOSTIC_CODES, type JsonObject } from "./types.js";
-import { DiagnosticCollector, looksLikePath } from "./diagnostics.js";
+import type { DiagnosticCollector} from "./diagnostics.js";
+import { looksLikePath } from "./diagnostics.js";
 
 const BINARY_COMPARATORS = new Set(["eq", "neq", "lt", "lte", "gt", "gte"]);
 

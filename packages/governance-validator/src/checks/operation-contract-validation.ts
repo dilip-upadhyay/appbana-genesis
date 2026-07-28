@@ -303,7 +303,7 @@ async function evaluateOperationContractValidation(
   ctx: GateCheckContext,
 ): Promise<GateCheckVerdict> {
   const evaluatedAt = ctx.clock();
-  const startMs = Date.now();
+  const startMs = Date.parse(evaluatedAt);
 
   const operations = readOperations(input.cam);
   const problems: Problem[] = [];
@@ -333,7 +333,7 @@ async function evaluateOperationContractValidation(
       },
       diagnostics: [],
       evaluatedAt,
-      durationMs: Date.now() - startMs,
+      durationMs: Date.parse(ctx.clock()) - startMs,
     };
   }
 
@@ -350,7 +350,7 @@ async function evaluateOperationContractValidation(
     },
     diagnostics: problems.map(problemToDiagnostic),
     evaluatedAt,
-    durationMs: Date.now() - startMs,
+    durationMs: Date.parse(ctx.clock()) - startMs,
   };
 }
 

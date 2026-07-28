@@ -20,15 +20,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "lint": "eslint .",
+    "test": "pnpm run build && node --test --experimental-strip-types \"__tests__/*.test.ts\"",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@appbana/adapter-ai-contract": "file:../adapter-ai-contract"
+    "@appbana/adapter-ai-contract": "workspace:*"
   },
   "devDependencies": {
-    "@appbana/prompt-template-registry": "file:../prompt-template-registry",
-    "@appbana/security-redaction": "file:../security-redaction",
+    "@appbana/prompt-template-registry": "workspace:*",
+    "@appbana/security-redaction": "workspace:*",
     "@types/node": "^22.9.0",
     "@types/pg": "^8.20.0",
     "pg-mem": "^3.0.14",

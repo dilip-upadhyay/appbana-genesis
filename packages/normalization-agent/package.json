@@ -19,15 +19,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "lint": "eslint .",
+    "test": "pnpm run build && node --test --experimental-strip-types \"__tests__/*.test.ts\"",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@appbana/adapter-ai-contract": "file:../adapter-ai-contract",
-    "@appbana/ai-provenance-store": "file:../ai-provenance-store",
-    "@appbana/prompt-template-registry": "file:../prompt-template-registry",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1"
+    "@appbana/adapter-ai-contract": "workspace:*",
+    "@appbana/ai-provenance-store": "workspace:*",
+    "@appbana/prompt-template-registry": "workspace:*",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

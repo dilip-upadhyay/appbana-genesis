@@ -16,15 +16,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "lint": "eslint .",
+    "test": "pnpm run build && node --test --experimental-strip-types \"__tests__/*.test.ts\"",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@appbana/adapter-ai-contract": "file:../adapter-ai-contract",
-    "@appbana/security-redaction": "file:../security-redaction"
+    "@appbana/adapter-ai-contract": "workspace:*",
+    "@appbana/security-redaction": "workspace:*"
   },
   "devDependencies": {
-    "@appbana/ai-adapter-conformance-suite": "file:../ai-adapter-conformance-suite",
+    "@appbana/ai-adapter-conformance-suite": "workspace:*",
     "@types/node": "^22.9.0",
     "rimraf": "^6.0.1",
     "typescript": "5.6.3"

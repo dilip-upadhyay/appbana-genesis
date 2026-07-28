@@ -82,19 +82,39 @@ docs/phase0/       # Phase 0 live tracker
 ## Build & Test Commands
 
 ```powershell
-pnpm install         # install all workspace deps
-pnpm build           # build all packages (recursive)
-pnpm test            # test all packages
-pnpm lint            # lint all packages
-pnpm typecheck       # type-check all packages
-pnpm clean           # remove all dist/ and node_modules
+pnpm install --frozen-lockfile   # install all workspace deps (CI uses this exact form)
+pnpm build            # build all packages (recursive, topological)
+pnpm lint             # ESLint across the repo (flat config: eslint.config.mjs)
+pnpm lint:fix         # ESLint with --fix
+pnpm typecheck        # type-check all packages
+pnpm test             # test all packages
+pnpm validate:schemas # validate example artifacts against the JSON Schemas
+pnpm clean            # remove all dist/ and node_modules
+```
+
+**Build must run before test.** Every test file imports compiled output from `../dist/`,
+so `.github/workflows/ci.yml` runs `Install → Build → Lint → Typecheck → Test`. Do not
+reorder these steps.
+
+**`pnpm-lock.yaml` is committed and CI uses `--frozen-lockfile`.** Pin exact versions for
+schema-critical dependencies (`ajv`, `ajv-formats`). A floating caret range on `ajv`
+previously resolved to 8.20.0, which stopped publishing its `dist/` directory and broke
+every validator in the repo.
+
+**Never delete `dist/` recursively from `packages/`.** `Get-ChildItem packages -Include dist -Recurse`
+also matches `packages/*/node_modules/**/dist` and will destroy installed dependencies.
+Clean per package instead:
+```powershell
+Get-ChildItem packages -Directory | ForEach-Object { $d = Join-Path $_.FullName "dist"; if (Test-Path $d) { Remove-Item $d -Recurse -Force } }
 ```
 
 CI runs on every PR via `.github/workflows/ci.yml`. Must be green before merging.
 
 ## AI & Provenance Rules (mandatory on every AI call)
 
-Every AI call must record: model name, model version, prompt template ID + version, input hash, output hash, token count, timestamp, human reviewer (if applicable). Prompt templates are versioned in `packages/ai-application-agent/prompts/`. Never hard-code a model name in agent logic — always route through the AI model adapter interface.
+Every AI call must record: model name, model version, prompt template ID + version, input hash, output hash, token count, timestamp, human reviewer (if applicable). Prompt templates are versioned in `packages/prompt-template-registry/prompts/`. Never hard-code a model name in agent logic — always route through the AI model adapter interface.
+
+**Note:** `packages/ai-application-agent` is referenced in `architecture.md`, ADR-015 and `packages/README.md` as the planned home for agent orchestration. It does not exist yet. The prompt registry was extracted into `packages/prompt-template-registry` instead. Do not create `ai-application-agent` speculatively — when agent orchestration lands, reconcile the naming in one ADR update rather than leaving both names in circulation.
 
 ## Governance Publication Gate (all 10 checks mandatory)
 

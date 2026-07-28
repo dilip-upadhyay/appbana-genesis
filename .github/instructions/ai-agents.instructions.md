@@ -1,6 +1,6 @@
 ---
 description: "Use when implementing or modifying AI agents, the multi-model adapter layer, prompt templates, the BIM-to-AIM translation pipeline, or AI provenance recording. Covers agent responsibilities, the model adapter interface, provenance schema, prompt versioning, and the eval framework."
-applyTo: "packages/ai-application-agent/**,packages/adapter-ai-*/**"
+applyTo: "packages/adapter-ai-*/**,packages/prompt-template-registry/**,packages/ai-provenance-store/**,packages/normalization-agent/**,packages/ai-adapter-conformance-suite/**"
 ---
 
 # AI Agent & Model Adapter Instructions
@@ -80,7 +80,7 @@ Every provenance record is stored in the Metadata Registry and linked to the BIM
 
 ## Prompt Template Conventions
 
-- Templates live in `packages/ai-application-agent/prompts/{agentRole}/{templateId}.v{version}.md`.
+- Templates live in `packages/prompt-template-registry/prompts/{agentRole}/{templateId}.{version}.prompt.md`.
 - Template body uses `{{variable_name}}` placeholders — same convention as VS Code Copilot.
 - System prompt and user prompt are separate sections in the template file.
 - Templates are versioned independently of the agent code — bumping a template version creates a new provenance lineage.
@@ -101,7 +101,7 @@ Assignments are configuration — not hard-coded. An operator may override per-a
 
 ## Eval Framework (mandatory from Phase 0)
 
-Every agent must have an eval suite in `packages/ai-application-agent/evals/{agentRole}/`:
+Every agent must have an eval suite in `packages/{agentPackage}/evals/`:
 - `cases/` — input fixtures (BIMs, conversation transcripts, etc.)
 - `expectations/` — expected outputs (AIMs, clarification questions, etc.)
 - `metrics.ts` — scoring function (exact match, schema validity, semantic similarity threshold)
@@ -121,5 +121,5 @@ Eval suite runs in CI on every change to a prompt template or agent code.
 - Each agent is a LangGraph `StateGraph` node.
 - Shared state is the `IntentContext` (carries BIM draft, clarifications, AIM draft, provenance chain).
 - Human-in-the-loop pauses use LangGraph's `interrupt_before` at the clarification and validation nodes.
-- Graph definition files live in `packages/ai-application-agent/graphs/`.
+- Graph definition files live in the owning agent package under `graphs/`.
 - No business logic in graph edge conditions — only routing based on agent output type.

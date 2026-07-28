@@ -110,6 +110,7 @@ export function createLocalLlamaStructuredOutputAdapter(
           client !== undefined
             ? "local llama client ready"
             : "adapter not initialised",
+        // eslint-disable-next-line no-restricted-syntax -- health() is an I/O liveness probe. `checkedAt` records when the probe actually ran; it is observability of an external system, not a value on the deterministic execution path.
         checkedAt: new Date().toISOString(),
       };
     },

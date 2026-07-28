@@ -30,7 +30,11 @@ function compileCamValidator(): (data: unknown) => { valid: boolean; errors: unk
   const validate = ajv.compile(schema);
   return (data) => {
     const valid = validate(data);
-    return { valid, errors: (ajv.errors ?? validate.hasOwnProperty("errors") ? (validate as unknown as { errors?: unknown[] }).errors ?? [] : []) as unknown[] };
+    // Ajv attaches errors to the compiled validator, falling back to the
+    // instance for compile-time errors. Both are nulled between runs.
+    const fromValidator = (validate as unknown as { errors?: unknown[] | null }).errors;
+    const errors = fromValidator ?? ajv.errors ?? [];
+    return { valid, errors: errors as unknown[] };
   };
 }
 

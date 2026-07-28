@@ -105,7 +105,7 @@ async function evaluateSchemaValidation(
   ctx: GateCheckContext,
 ): Promise<GateCheckVerdict> {
   const evaluatedAt = ctx.clock();
-  const startMs = Date.now();
+  const startMs = Date.parse(evaluatedAt);
 
   let errors: readonly AjvErrorObject[];
   try {
@@ -134,7 +134,7 @@ async function evaluateSchemaValidation(
         { severity: "error", code: "SCHEMA_COMPILE_FAILED", message, path: "" },
       ],
       evaluatedAt,
-      durationMs: Date.now() - startMs,
+      durationMs: Date.parse(ctx.clock()) - startMs,
     };
   }
 
@@ -146,7 +146,7 @@ async function evaluateSchemaValidation(
       evidence: { errorCount: 0, errors: [] },
       diagnostics: [],
       evaluatedAt,
-      durationMs: Date.now() - startMs,
+      durationMs: Date.parse(ctx.clock()) - startMs,
     };
   }
 
@@ -162,7 +162,7 @@ async function evaluateSchemaValidation(
     } as unknown as import("../types.js").Json,
     diagnostics: errors.map(errorToDiagnostic),
     evaluatedAt,
-    durationMs: Date.now() - startMs,
+    durationMs: Date.parse(ctx.clock()) - startMs,
   };
 }
 

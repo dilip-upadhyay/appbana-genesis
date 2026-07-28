@@ -325,6 +325,7 @@ const check_B_1: Check = {
       ...fixtures.invocationContext,
       signal: controller.signal,
     };
+    // eslint-disable-next-line no-restricted-syntax -- this check asserts that a real adapter honours abort within a wall-clock budget. An injected clock would defeat the assertion.
     const start = Date.now();
     let result: AIInvocationResult;
     try {
@@ -335,6 +336,7 @@ const check_B_1: Check = {
         reason: `adapter threw on aborted request; must return an outcome instead: ${errString(err)}`,
       };
     }
+    // eslint-disable-next-line no-restricted-syntax -- paired with the wall-clock reading above; measures real abort latency.
     const elapsedMs = Date.now() - start;
     if (result.outcome === "accepted") {
       return {

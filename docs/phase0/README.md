@@ -68,8 +68,33 @@ This is the live tracker for Phase 0. See [execution-plan.md](../../execution-pl
 
 - [x] All 7 ADRs (011–017) approved
 - [x] All 5 schemas v0.1 published
-- [x] Repo scaffold builds and CI is green
+- [x] Repo scaffold builds and CI is green — **see correction below**
 - [x] Customer Onboarding reference artifacts validate cleanly
 - [x] Phase 1 backlog is executable (each task has acceptance criteria and estimate) — see [Phase 1 tracker](../phase1/README.md)
 
 **✅ Phase 0 CLOSED — 2026-07-24.** All exit criteria met.
+
+### Correction — CI exit criterion was marked complete prematurely
+
+An architecture review found that this exit criterion was ticked without a verified green
+pipeline. The following defects existed at the time it was marked complete:
+
+- `ci.yml` ran **Test before Build**, while every test file imports from `../dist/`.
+  The suite only passed because stale `dist/` output happened to exist in the runner cache;
+  from a genuinely clean checkout it failed with `ERR_MODULE_NOT_FOUND`.
+- `pnpm lint` was a no-op — no ESLint configuration existed and no package declared a
+  `lint` script.
+- `pnpm typecheck` failed on five pre-existing type errors in `governance-validator` and
+  `ai-provenance-store` test files.
+- No lockfile was committed and CI used `--no-frozen-lockfile`, so dependency resolution
+  was non-reproducible. This later caused a real breakage when `ajv` floated from 8.17.1
+  to 8.20.0, a minor release that stopped publishing its `dist/` directory.
+
+All four defects are fixed. The step order is now `Install → Build → Lint → Typecheck → Test`,
+ESLint is configured repo-wide, a `pnpm-lock.yaml` is committed, and both CI jobs use
+`--frozen-lockfile`. The full sequence has been verified green from a clean state
+(326 tests passing, 0 failures).
+
+**This box stays ticked only once a green run is observed on GitHub Actions**, not on the
+strength of a local run. The lesson recorded here: an exit criterion is not met until it has
+been observed, not asserted.

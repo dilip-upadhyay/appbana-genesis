@@ -19,12 +19,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "lint": "eslint .",
+    "test": "pnpm run build && node --test --experimental-strip-types \"__tests__/*.test.ts\"",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@appbana/metadata-registry": "file:../metadata-registry",
-    "@appbana/platform-kernel": "file:../platform-kernel"
+    "@appbana/metadata-registry": "workspace:*",
+    "@appbana/platform-kernel": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
