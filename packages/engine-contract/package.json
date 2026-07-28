@@ -1,0 +1,35 @@
+{
+  "name": "@appbana/engine-contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AppBana Genesis runtime engine contract — the executable form of ADR-013. Exports the RuntimeEngine interface, the closed EffectDescriptor union, ExecutionContext, EngineResult, Diagnostic, the canonical TraceEvent type, and a conformance suite that mechanically proves determinism, purity, effect-union membership, trace-event schema conformance, and mandated-event completeness for any engine implementation.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "pnpm run build && node --test --experimental-strip-types \"__tests__/*.test.ts\"",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.6.3"
+  }
+}
