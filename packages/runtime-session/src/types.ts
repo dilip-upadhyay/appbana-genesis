@@ -30,15 +30,17 @@ export interface Principal {
 export type SessionStatus = "active" | "closed" | "aborted";
 
 /**
- * Persisted per-user-per-app runtime context. `camContentHash` + `camVersion`
- * are snapshotted at start so version swaps mid-session do not affect the
- * session's semantics.
+ * Persisted per-user-per-app runtime context. `camId`, `camContentHash` and
+ * `camVersion` are snapshotted at start so version swaps mid-session do not
+ * affect the session's semantics.
  */
 export interface Session {
   readonly sessionId: string;
   readonly appId: string;
   readonly tenantId: string;
   readonly principal: Principal;
+  /** `cam.<slug>` — required by the trace-event `context` object. */
+  readonly camId: string;
   readonly camContentHash: string;
   readonly camVersion: string;
   readonly status: SessionStatus;
@@ -46,6 +48,14 @@ export interface Session {
   readonly startedAt: string;
   readonly endedAt?: string;
   readonly endReason?: string;
+  /**
+   * W3C trace-id for the whole session. Every trace event emitted for this
+   * session shares it, so the Trace Viewer can reconstruct one session as a
+   * single trace.
+   */
+  readonly traceId: string;
+  /** Business-level correlation id shared by every event in this session. */
+  readonly correlationId: string;
 }
 
 export interface StartSessionInput {
@@ -74,26 +84,83 @@ export interface SessionListFilter {
 }
 
 /**
- * The minimal trace-event shape emitted by this package. Aligns with the
- * envelope invariants of `docs/schemas/trace-event.v0.1.schema.json` but is
- * intentionally structural (not schema-loaded) — the full event bus + kind
- * registry land in WS-1.4 Task 3.
+ * A trace event emitted by this package.
+ *
+ * This type is a structural mirror of `docs/schemas/trace-event.v0.1.schema.json`
+ * and is validated against that schema in `__tests__/trace-conformance.test.ts`.
+ * The schema sets `additionalProperties: false`, so nothing may be added here
+ * without a corresponding schema change.
+ *
+ * Note the deliberate omissions: `reproducibilityHash` is required only for
+ * `producedBy.kind === "adapter"` events (ADR-014), and this package is a kernel
+ * subsystem, so it never sets it.
  */
 export interface SessionTraceEvent {
   readonly traceEventVersion: "0.1";
-  readonly eventId: string;
-  readonly eventKindId: string;
-  readonly appId: string;
-  readonly tenantId: string;
-  readonly sessionId: string;
-  readonly camVersion: string;
-  readonly camContentHash: string;
-  readonly emittedAt: string;
+  /** Globally unique event id. Schema requires `format: uuid`. */
+  readonly id: string;
+  /** Schema pattern `^event\.[a-z][a-z0-9.-]*$`. */
+  readonly eventKindRef: string;
+  /** ISO-8601. Sourced from the injected clock, never the wall clock. */
+  readonly occurredAt: string;
   readonly producedBy: {
-    readonly runtimeRole: "kernel";
-    readonly component: "runtime-session";
+    readonly kind: "kernel";
+    readonly subsystem: "session";
+    readonly kernelVersion?: string;
   };
+  /** W3C Trace Context. Without this, OpenTelemetry propagation is impossible. */
+  readonly traceContext: {
+    /** 16-byte lowercase hex. */
+    readonly traceId: string;
+    /** 8-byte lowercase hex. */
+    readonly spanId: string;
+    readonly parentSpanId?: string | null;
+  };
+  readonly correlation: {
+    readonly correlationId: string;
+    readonly causationId?: string | null;
+    readonly principal?: {
+      readonly roleId: string;
+      readonly subjectId?: string | null;
+      readonly authenticated: boolean;
+    } | null;
+  };
+  readonly context: {
+    readonly appId: string;
+    readonly camId: string;
+    readonly camVersion: string;
+    readonly tenantId?: string | null;
+    readonly environment: TraceEnvironment;
+    readonly region?: string;
+  };
+  readonly severity: TraceSeverity;
   readonly payload: JsonObject;
+  /**
+   * Present and possibly empty. The schema requires an empty array rather than
+   * an absent one so consumers can distinguish "nothing redacted" from
+   * "redaction never ran".
+   */
+  readonly redactions: readonly TraceRedaction[];
+  readonly attributes?: Readonly<Record<string, string | number | boolean>>;
+}
+
+export type TraceSeverity = "debug" | "info" | "warn" | "error";
+
+export type TraceEnvironment = "dev" | "staging" | "canary" | "prod";
+
+export interface TraceRedaction {
+  /** JSON Pointer relative to `payload`. */
+  readonly path: string;
+  readonly classification: "public" | "internal" | "confidential" | "pii" | "sensitive-pii";
+  readonly action: "removed" | "masked" | "hashed" | "truncated";
+  readonly policyRef?: string;
+}
+
+/** W3C trace context supplied per emitted event. */
+export interface TraceContext {
+  readonly traceId: string;
+  readonly spanId: string;
+  readonly parentSpanId?: string | null;
 }
 
 /** Sink for trace events. The event bus lands in WS-1.4 Task 3; this package uses the sink. */

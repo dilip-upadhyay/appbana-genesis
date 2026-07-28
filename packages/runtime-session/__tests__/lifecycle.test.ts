@@ -26,6 +26,12 @@ function counterId(prefix: string): () => string {
   return () => `${prefix}-${++n}`;
 }
 
+/** Event ids must be UUIDs to satisfy the trace-event schema. */
+function counterUuid(): () => string {
+  let n = 0;
+  return () => `00000000-0000-4000-8000-${(++n).toString(16).padStart(12, "0")}`;
+}
+
 async function makeLifecycle() {
   const { governanceRegistry, metadataRegistry, camContentHash } = await seed();
   const store = new InMemorySessionStore();
@@ -37,7 +43,7 @@ async function makeLifecycle() {
     traceSink: sink,
     now: deterministicClock("2026-07-25T00:00:00.000Z"),
     sessionIdGenerator: counterId("session"),
-    eventIdGenerator: counterId("evt"),
+    eventIdGenerator: counterUuid(),
   });
   return { lifecycle, store, sink, camContentHash };
 }
@@ -76,11 +82,13 @@ describe("SessionLifecycle — startSession", () => {
     });
     assert.equal(sink.events.length, 1);
     const e = sink.events[0]!;
-    assert.equal(e.eventKindId, "event.session.started");
-    assert.equal(e.camContentHash, camContentHash);
-    assert.equal(e.camVersion, CAM_VERSION);
-    assert.equal(e.producedBy.component, "runtime-session");
-    assert.equal(e.producedBy.runtimeRole, "kernel");
+    assert.equal(e.eventKindRef, "event.session.started");
+    assert.equal(e.attributes?.["appbana.cam.content_hash"], camContentHash);
+    assert.equal(e.context.camVersion, CAM_VERSION);
+    assert.equal(e.context.appId, APP_ID);
+    assert.equal(e.producedBy.kind, "kernel");
+    assert.equal(e.producedBy.subsystem, "session");
+    assert.equal(e.severity, "info");
     assert.deepEqual(e.payload, {
       principalId: PRINCIPAL_ID,
       roleCount: 1,
@@ -147,12 +155,13 @@ describe("SessionLifecycle — updateSessionState", () => {
     assert.deepEqual(updated.state, { step: "kyc", taxId: "12-3456789" });
     assert.deepEqual((await store.get(started.sessionId))?.state, updated.state);
     const stateEvent = sink.events.find(
-      (e) => e.eventKindId === "event.session.state.updated",
+      (e) => e.eventKindRef === "event.session.state.updated",
     );
     assert.ok(stateEvent);
     assert.deepEqual(stateEvent!.payload, {
       patchKeys: ["step", "taxId"],
     });
+    assert.equal(stateEvent!.severity, "debug");
   });
 
   it("throws SessionNotFoundError when the session is unknown", async () => {
@@ -190,7 +199,7 @@ describe("SessionLifecycle — endSession / abortSession", () => {
     assert.equal(ended.status, "closed");
     assert.equal(ended.endReason, "completed");
     assert.ok(ended.endedAt);
-    const evt = sink.events.find((e) => e.eventKindId === "event.session.ended");
+    const evt = sink.events.find((e) => e.eventKindRef === "event.session.ended");
     assert.ok(evt);
     assert.equal(evt!.payload["status"], "closed");
     assert.equal(evt!.payload["reason"], "completed");
@@ -207,10 +216,11 @@ describe("SessionLifecycle — endSession / abortSession", () => {
     const aborted = await lifecycle.abortSession(s.sessionId, "kernel-shutdown");
     assert.equal(aborted.status, "aborted");
     const evt = sink.events.find(
-      (e) => e.eventKindId === "event.session.aborted",
+      (e) => e.eventKindRef === "event.session.aborted",
     );
     assert.ok(evt);
     assert.equal(evt!.payload["reason"], "kernel-shutdown");
+    assert.equal(evt!.severity, "warn");
   });
 
   it("endSession on an already-ended session throws SessionAlreadyEndedError", async () => {

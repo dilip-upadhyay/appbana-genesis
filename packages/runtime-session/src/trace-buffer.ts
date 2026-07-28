@@ -6,18 +6,32 @@
 
 import type { SessionTraceEvent, TraceSink } from "./types.js";
 
+/**
+ * Session id lives in `attributes` because the trace-event schema sets
+ * `additionalProperties: false` on the envelope. Events emitted by other
+ * producers may not carry it, so they are bucketed under `UNATTRIBUTED` rather
+ * than being dropped.
+ */
+export const UNATTRIBUTED = "\u0000unattributed";
+
+function sessionIdOf(event: SessionTraceEvent): string {
+  const value = event.attributes?.["appbana.session.id"];
+  return typeof value === "string" ? value : UNATTRIBUTED;
+}
+
 export class BufferedTraceSink implements TraceSink {
   private readonly buffers = new Map<string, SessionTraceEvent[]>();
 
   constructor(private readonly downstream: TraceSink) {}
 
   emit(event: SessionTraceEvent): void {
-    const existing = this.buffers.get(event.sessionId);
+    const key = sessionIdOf(event);
+    const existing = this.buffers.get(key);
     if (existing) {
       existing.push(event);
       return;
     }
-    this.buffers.set(event.sessionId, [event]);
+    this.buffers.set(key, [event]);
   }
 
   /** Returns the events that were queued for the session. */

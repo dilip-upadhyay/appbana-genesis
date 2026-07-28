@@ -247,7 +247,7 @@
             "kind": { "const": "kernel" },
             "subsystem": {
               "type": "string",
-              "enum": ["loader", "scheduler", "registry", "gate", "effect-dispatch", "provenance"]
+              "enum": ["loader", "scheduler", "registry", "gate", "effect-dispatch", "provenance", "session"]
             },
             "kernelVersion": {
               "type": "string",

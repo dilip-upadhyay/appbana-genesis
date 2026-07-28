@@ -49,15 +49,21 @@ describe("integration — session lifecycle + buffered trace sink + graceful shu
     await lifecycle.shutdown("graceful-shutdown");
     const totalFlushed = await buffered.flushAll();
     assert.equal(totalFlushed, downstream.events.length);
+
+    // Session id now lives in `attributes` because the trace-event schema sets
+    // `additionalProperties: false` on the envelope.
+    const sessionOf = (e: { attributes?: Readonly<Record<string, unknown>> }): unknown =>
+      e.attributes?.["appbana.session.id"];
+
     // Each session's events reference its own session id
     for (const e of downstream.events) {
-      assert.ok(e.sessionId === a.sessionId || e.sessionId === b.sessionId);
+      assert.ok(sessionOf(e) === a.sessionId || sessionOf(e) === b.sessionId);
     }
     // Both sessions ended up with a terminal-status event
     const terminalKinds = downstream.events
-      .filter((e) => ["event.session.ended", "event.session.aborted"].includes(e.eventKindId))
-      .map((e) => e.sessionId);
-    assert.ok(terminalKinds.includes(a.sessionId) || a.sessionId === undefined);
+      .filter((e) => ["event.session.ended", "event.session.aborted"].includes(e.eventKindRef))
+      .map(sessionOf);
+    assert.ok(terminalKinds.includes(a.sessionId));
     assert.ok(terminalKinds.includes(b.sessionId));
   });
 

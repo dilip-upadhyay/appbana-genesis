@@ -6,10 +6,12 @@ export const APP_ID = "app.customer-onboarding";
 export const TENANT_ID = "tenant.demo";
 export const PRINCIPAL_ID = "principal.alice";
 export const CAM_VERSION = "1.0.0";
+/** Must satisfy the trace-event schema pattern `^cam\.[a-z0-9][a-z0-9-]*$`. */
+export const CAM_ID = "cam.customer-onboarding";
 
 export function makeCam(overrides: Partial<JsonObject> = {}): JsonObject {
   return {
-    camId: "cam.customer-onboarding@1.0.0",
+    camId: CAM_ID,
     camVersion: "0.1",
     appId: APP_ID,
     version: CAM_VERSION,

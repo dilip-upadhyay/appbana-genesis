@@ -73,10 +73,12 @@ import {
 ## Design invariants
 
 - **Deterministic clock** — `now: () => Date` is injected; every timestamp on `Session` and `SessionTraceEvent` derives from it, so tests are byte-stable.
-- **Deterministic id generation** — `sessionIdGenerator` and `eventIdGenerator` are injected; defaults use a lightweight counter suffixed by base-36 wall-clock ms for readable ids without pulling `crypto.randomUUID`.
+- **Injected id generation** — `sessionIdGenerator`, `eventIdGenerator`, `correlationIdGenerator`, `traceIdGenerator` and `spanIdGenerator` are all injectable. The trace-event schema requires `format: uuid` on `id` and `correlationId`, and 32/16-char lowercase hex on `traceId`/`spanId`, so the defaults are random rather than clock-derived. Tests inject deterministic generators.
 - **Fail-closed** — every code path that reaches persistence has already validated the principal and resolved the CAM.
 - **Tenant isolation at the store** — `SessionStore.list` filters by `tenantId` independent of `appId`, matching the ADR-017 `(appId, tenantId)` pointer boundary.
-- **Trace events are envelope-shaped** — `SessionTraceEvent` carries `traceEventVersion: "0.1"`, `producedBy: { runtimeRole: "kernel", component: "runtime-session" }`, and the session's `camVersion` + `camContentHash`, matching the envelope invariants of `docs/schemas/trace-event.v0.1.schema.json`. The full kind registry lands in WS-1.4 Task 3.
+- **Trace events are schema-validated, not merely schema-shaped** — every emitted event is validated against the real `docs/schemas/trace-event.v0.1.schema.json` with Ajv in `__tests__/trace-conformance.test.ts`, including a negative control proving the validator is not vacuous. The schema sets `additionalProperties: false`, so `sessionId` and `camContentHash` travel in `attributes` (the documented OpenTelemetry export surface) rather than at the envelope top level.
+- **W3C trace context on every event** — all events in a session share the session's `traceId` and carry a unique `spanId`, so the Trace Viewer can reconstruct one session as a single trace and OpenTelemetry propagation works without a later envelope change.
+- **`redactions` is always present** — an empty array rather than an absent key, so consumers can distinguish "nothing was redacted" from "redaction never ran".
 
 ## Emitted trace event kinds
 

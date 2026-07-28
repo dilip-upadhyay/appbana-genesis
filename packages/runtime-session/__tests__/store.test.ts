@@ -12,11 +12,14 @@ function makeSession(overrides: Partial<Session> = {}): Session {
     appId: "app.a",
     tenantId: "tenant.alpha",
     principal: { principalId: "p.1", roles: ["role.applicant"] },
+    camId: "cam.a",
     camContentHash: "sha256:aaa",
     camVersion: "1.0.0",
     status: "active",
     state: {},
     startedAt: "2026-07-25T00:00:00.000Z",
+    traceId: "a".repeat(32),
+    correlationId: "11111111-1111-4111-8111-111111111111",
     ...overrides,
   };
 }

@@ -11,6 +11,8 @@
 // and effect dispatch in Task 4; both consume this package's `Session` shape
 // and `SessionTraceEvent` shape unchanged.
 
+import { randomUUID } from "node:crypto";
+
 import type { JsonObject, MetadataRegistry } from "@appbana/metadata-registry";
 import {
   resolveCam,
@@ -27,6 +29,8 @@ import {
   type SessionStore,
   type SessionTraceEvent,
   type StartSessionInput,
+  type TraceEnvironment,
+  type TraceSeverity,
   type TraceSink,
 } from "./types.js";
 
@@ -38,11 +42,22 @@ export interface SessionLifecycleDeps {
   readonly traceSink: TraceSink;
   readonly now?: () => Date;
   readonly sessionIdGenerator?: () => string;
+  /** Must yield a UUID — the trace-event schema requires `format: uuid` on `id`. */
   readonly eventIdGenerator?: () => string;
+  /** Must yield a UUID. Shared by every event in one session. */
+  readonly correlationIdGenerator?: () => string;
+  /** Must yield 32 lowercase hex chars (W3C trace-id). */
+  readonly traceIdGenerator?: () => string;
+  /** Must yield 16 lowercase hex chars (W3C span-id). One per emitted event. */
+  readonly spanIdGenerator?: () => string;
+  /** Recorded in `context.environment`. Defaults to `dev`. */
+  readonly environment?: TraceEnvironment;
+  /** Recorded in `producedBy.kernelVersion` when supplied. */
+  readonly kernelVersion?: string;
 }
 
 /**
- * Builds the fallback id generator used when the caller injects none.
+ * Builds the fallback session-id generator used when the caller injects none.
  *
  * Two properties matter here (ADR-013):
  *  - time comes from the *injected* clock, so a frozen clock produces stable
@@ -58,6 +73,11 @@ function createDefaultIdGenerator(now: () => Date): (prefix: string) => string {
   };
 }
 
+/** Lowercase hex string of `bytes` length, used for W3C trace and span ids. */
+function randomHex(bytes: number): string {
+  return randomUUID().replaceAll("-", "").slice(0, bytes * 2);
+}
+
 export class SessionLifecycle {
   private readonly store: SessionStore;
   private readonly governanceRegistry: GovernanceRegistry;
@@ -67,6 +87,11 @@ export class SessionLifecycle {
   private readonly now: () => Date;
   private readonly nextSessionId: () => string;
   private readonly nextEventId: () => string;
+  private readonly nextCorrelationId: () => string;
+  private readonly nextTraceId: () => string;
+  private readonly nextSpanId: () => string;
+  private readonly environment: TraceEnvironment;
+  private readonly kernelVersion: string | undefined;
 
   constructor(deps: SessionLifecycleDeps) {
     this.store = deps.store;
@@ -77,7 +102,15 @@ export class SessionLifecycle {
     this.now = deps.now ?? (() => new Date());
     const defaultId = createDefaultIdGenerator(this.now);
     this.nextSessionId = deps.sessionIdGenerator ?? (() => defaultId("session"));
-    this.nextEventId = deps.eventIdGenerator ?? (() => defaultId("evt"));
+    // Event, correlation and trace ids must satisfy the trace-event schema's
+    // uuid / hex patterns, so the defaults are random rather than clock-derived.
+    // Tests inject deterministic generators.
+    this.nextEventId = deps.eventIdGenerator ?? (() => randomUUID());
+    this.nextCorrelationId = deps.correlationIdGenerator ?? (() => randomUUID());
+    this.nextTraceId = deps.traceIdGenerator ?? (() => randomHex(16));
+    this.nextSpanId = deps.spanIdGenerator ?? (() => randomHex(8));
+    this.environment = deps.environment ?? "dev";
+    this.kernelVersion = deps.kernelVersion;
   }
 
   async startSession(input: StartSessionInput): Promise<Session> {
@@ -99,15 +132,18 @@ export class SessionLifecycle {
       appId: input.appId,
       tenantId: input.tenantId,
       principal: input.principal,
+      camId: loaded.camId,
       camContentHash: loaded.camContentHash,
       camVersion: loaded.camVersion,
       status: "active",
       state: input.initialState ?? {},
       startedAt: this.now().toISOString(),
+      traceId: this.nextTraceId(),
+      correlationId: this.nextCorrelationId(),
     };
     await this.store.put(session);
 
-    await this.emit(session, "event.session.started", {
+    await this.emit(session, "event.session.started", "info", {
       principalId: input.principal.principalId,
       roleCount: input.principal.roles.length,
     });
@@ -136,7 +172,7 @@ export class SessionLifecycle {
       state: { ...current.state, ...patch },
     };
     await this.store.put(updated);
-    await this.emit(updated, "event.session.state.updated", {
+    await this.emit(updated, "event.session.state.updated", "debug", {
       patchKeys: Object.keys(patch).sort((a, b) => a.localeCompare(b)),
     });
     return updated;
@@ -168,7 +204,7 @@ export class SessionLifecycle {
     sessionId: string,
     nextStatus: "closed" | "aborted",
     reason: string | undefined,
-    eventKindId: string,
+    eventKindRef: string,
   ): Promise<Session> {
     const current = await this.getSession(sessionId);
     if (current.status !== "active") {
@@ -184,7 +220,7 @@ export class SessionLifecycle {
       ...(reason !== undefined ? { endReason: reason } : {}),
     };
     await this.store.put(updated);
-    await this.emit(updated, eventKindId, {
+    await this.emit(updated, eventKindRef, nextStatus === "aborted" ? "warn" : "info", {
       status: nextStatus,
       durationMs,
       ...(reason !== undefined ? { reason } : {}),
@@ -192,23 +228,57 @@ export class SessionLifecycle {
     return updated;
   }
 
+  /**
+   * Builds a trace event that conforms to `trace-event.v0.1.schema.json`.
+   *
+   * `sessionId` and `camContentHash` live under `attributes` rather than at the
+   * top level because the schema sets `additionalProperties: false`. That is
+   * also the correct home for them: `attributes` is the documented OpenTelemetry
+   * export surface.
+   */
   private async emit(
     session: Session,
-    eventKindId: string,
+    eventKindRef: string,
+    severity: TraceSeverity,
     payload: JsonObject,
   ): Promise<void> {
+    const roleId = session.principal.roles[0];
     const event: SessionTraceEvent = {
       traceEventVersion: "0.1",
-      eventId: this.nextEventId(),
-      eventKindId,
-      appId: session.appId,
-      tenantId: session.tenantId,
-      sessionId: session.sessionId,
-      camVersion: session.camVersion,
-      camContentHash: session.camContentHash,
-      emittedAt: this.now().toISOString(),
-      producedBy: { runtimeRole: "kernel", component: "runtime-session" },
+      id: this.nextEventId(),
+      eventKindRef,
+      occurredAt: this.now().toISOString(),
+      producedBy: {
+        kind: "kernel",
+        subsystem: "session",
+        ...(this.kernelVersion !== undefined ? { kernelVersion: this.kernelVersion } : {}),
+      },
+      traceContext: {
+        traceId: session.traceId,
+        spanId: this.nextSpanId(),
+      },
+      correlation: {
+        correlationId: session.correlationId,
+        ...(roleId !== undefined
+          ? { principal: { roleId, subjectId: null, authenticated: true } }
+          : {}),
+      },
+      context: {
+        appId: session.appId,
+        camId: session.camId,
+        camVersion: session.camVersion,
+        tenantId: session.tenantId,
+        environment: this.environment,
+      },
+      severity,
       payload,
+      // Present-and-empty is required so consumers can tell "nothing redacted"
+      // apart from "redaction never ran". This package emits no PII in payloads.
+      redactions: [],
+      attributes: {
+        "appbana.session.id": session.sessionId,
+        "appbana.cam.content_hash": session.camContentHash,
+      },
     };
     await this.traceSink.emit(event);
   }
