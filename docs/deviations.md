@@ -16,10 +16,10 @@ This file exists because the project repeatedly resolved such gaps by quietly ed
 |---|---|---|---|---|
 | [DEV-001](#dev-001) | GPT-4o adapter dropped from WS-1.2 | High | open | Phase 2 |
 | [DEV-002](#dev-002) | `packages/ai-application-agent` never existed | Medium | open | Phase 1 |
-| [DEV-003](#dev-003) | 8 of 10 governance gate checks are unconditional stubs | High | open | Phase 2 |
+| [DEV-003](#dev-003) | 7 of 10 governance gate checks are unconditional stubs | High | open | Phase 2 |
 | [DEV-004](#dev-004) | ADR-013 `Omit` on a union does not distribute | Low | accepted | — |
 | [DEV-005](#dev-005) | No schema→TypeScript codegen anywhere in the repo | High | open | Phase 2 |
-| [DEV-006](#dev-006) | AIM cannot express screens, sections, or layout | Critical | open — [ADR-018](adr/ADR-018-presentation-intent-ownership.md) proposed | Phase 1 |
+| [DEV-006](#dev-006) | AIM cannot express screens, sections, or layout | Critical | **resolved** — [ADR-018](adr/ADR-018-presentation-intent-ownership.md) accepted and implemented | Phase 1 |
 | [DEV-007](#dev-007) | AIM has no index, metric, or event-kind concept | High | open | Phase 2 |
 | [DEV-008](#dev-008) | `create-customer-record` effect lost at the AIM→CAM boundary | High | open | Phase 1 |
 | [DEV-009](#dev-009) | ABAC id scheme diverges between generator and reference CAM | Medium | open | Phase 1 |
@@ -56,13 +56,15 @@ Prompts actually live in `packages/prompt-template-registry/prompts/`. The deliv
 
 ## DEV-003
 
-**8 of 10 mandatory governance gate checks unconditionally return `passed`** · High · open · resolve by Phase 2
+**7 of 10 mandatory governance gate checks unconditionally return `passed`** · High · open · resolve by Phase 2
 
-`packages/governance-validator/src/checks/phase1-stubs.ts` returns `outcome: "passed"` while ignoring its input (`_input`) for: security, privacy, accessibility, runtime-compatibility, adapter-capability-coverage, performance-budget, ai-governance, and rollback-readiness.
+`packages/governance-validator/src/checks/phase1-stubs.ts` returns `outcome: "passed"` while ignoring its input (`_input`) for: security, privacy, runtime-compatibility, adapter-capability-coverage, performance-budget, ai-governance, and rollback-readiness.
 
-ADR-017 declares all ten mandatory. `buildDefaultGate()` therefore emits `overallOutcome: passed` for any CAM that is schema-valid with matching operation contracts — so the kernel's fail-closed guarantee currently rests on **2 checks, not 10**.
+ADR-017 declares all ten mandatory. `buildDefaultGate()` therefore emits `overallOutcome: passed` for any CAM that is schema-valid with matching operation contracts — so the kernel's fail-closed guarantee currently rests on **3 checks, not 10**.
 
 The stub marker discipline (`phase1Stub: true`, `version: "0.0.0-phase1-stub"`) is well designed and honest. The risk is that nothing downstream inspects it: `resolveCam` does not refuse to serve on stubbed evidence.
+
+`check.accessibility-validation` left the stub file in 2026-08 when ADR-018 gave it its first enforceable invariant (a generator-invented layout may not activate outside `dev`). It is a partial implementation and says so: its evidence publishes `assertionsNotYetImplemented`, so a green verdict from a provenance-only check cannot be misread as an accessibility guarantee.
 
 **Resolution:** implement the remaining checks, and in the meantime make the kernel refuse `phase1Stub` evidence in any non-`dev` environment.
 
@@ -100,7 +102,7 @@ ADR-013 additionally specifies that `TraceEvent`, `EffectDescriptor`, and `Diagn
 
 ## DEV-006
 
-**AIM v0.1 cannot express screens, sections, or layout** · Critical · open · resolve by Phase 1
+**AIM v0.1 cannot express screens, sections, or layout** · Critical · **resolved** · ADR-018
 
 The AIM schema contains **zero** occurrences of `screen`, `section`, `layout`, or `wizard`. The reference CAM encodes a task-oriented multi-step wizard — basic-info → documents → review — with curated field grouping and progressive disclosure. None of that is expressible in AIM, so the generator falls back to a mechanical role × entity cross-product.
 
@@ -108,9 +110,13 @@ Verified by `packages/canonical-application-generator/__tests__/roundtrip.test.t
 
 This is the largest structural hole in the BIM → AIM → CAM chain, and it directly blocks the Phase 1 exit criterion of turning a conversation into a usable form.
 
-**Resolution:** [ADR-018 — Ownership of Presentation Intent](adr/ADR-018-presentation-intent-ownership.md), status **Proposed** (2026-08-06). Presentation intent is intent, so it belongs in the intent chain: BIM v0.2 gains prose `userJourneys[]`, AIM v0.2 gains a medium-neutral `interactionFlows[]` (`step`/`group`, deliberately not `screen`/`section`, so the model survives a move to voice or batch), and the generator is demoted from author to pure projection. The load-bearing part is the `origin` discriminator — `stated | agent-proposed | derived-default` — because the platform *is* allowed to propose a layout the user never described, but is not allowed to do so silently. Rollout is two-stage: optional in AIM v0.2 with an error-severity `CAM_GEN_INTERACTION_FLOWS_MISSING` diagnostic and a `generator-fallback` stamp the governance gate blocks outside `dev`; required in AIM v1.0.
+**Resolution:** [ADR-018 — Ownership of Presentation Intent](adr/ADR-018-presentation-intent-ownership.md), **Accepted** 2026-08-07 and implemented. BIM v0.2 gained prose `userJourneys[]`; AIM v0.2 gained a medium-neutral `interactionFlows[]` (`step`/`group`/`placement`, deliberately not `screen`/`section`/`field-binding`, so the model survives a move to voice or batch); CAM v0.2 gained `InteractionModel.origin`; and `buildInteractionModel()` was demoted from author to pure projection. The load-bearing part is the `origin` discriminator — `stated | agent-proposed | derived-default | generator-fallback` — because the platform *is* allowed to propose a layout the user never described, but is not allowed to do so silently.
 
-This deviation stays **open** until the ADR is Accepted *and* the 29 `aim-model-gap` entries are gone from the `KNOWN_GAPS` registry. The round-trip test's stale-gap-id guard will fail if they are removed prematurely, which is the intended enforcement.
+The generator now reproduces the hand-authored reference `InteractionModel` **exactly** — 4 screens, 6 sections, 19 field bindings, identical ids, titles, labels, help text, controls, ordering and conditional refs. The 29 `aim-model-gap` entries are gone from `KNOWN_GAPS`, and the round-trip test's stale-gap-id guard proves the generator genuinely produces them rather than the list simply having been edited.
+
+One element of the reference `InteractionModel` remains unreproduced: the `messages` string bundle, which has no AIM source. It is not tracked here because it is invisible to the round-trip test's id collector; see DEV-011.
+
+**Status: resolved** (2026-08-07).
 
 ---
 
@@ -171,4 +177,6 @@ Until at least one engine exists, the conformance suite is proven only against i
 
 `roundtrip.test.ts` now pins the delta in both directions, so the gap can neither grow unnoticed nor go stale. But the shipped reference artifact still is not something the platform can generate.
 
-**Resolution:** close DEV-006 through DEV-009, then regenerate `cam.json` from `aim.json` and delete the gap list.
+Since ADR-018 the whole `InteractionModel` — by far the largest part of the delta — *is* reproduced exactly, with one exception the round-trip test structurally cannot see: the `messages` string bundle. `collectIds` walks string-valued `id` *properties*, and message ids are object *keys*, so `template.request-more-info`, `template.approved` and `template.rejected` are invisible to it. Nothing upstream owns them either — AIM notify effects carry a `template` reference but no message text.
+
+**Resolution:** close DEV-007 through DEV-009, decide where message text lives (it is closer to `documents` policy than to layout), then regenerate `cam.json` from `aim.json` and delete the gap list. The `messages` bundle needs its own home before that is possible.

@@ -58,48 +58,6 @@ const KNOWN_GAPS: readonly Gap[] = [
   {
     cause: "aim-model-gap",
     reason:
-      "AIM v0.1 has no screen/section/layout concept whatsoever (the AIM schema contains zero " +
-      "occurrences of screen|section|layout|wizard). The reference CAM encodes a task-oriented " +
-      "multi-step wizard — basic-info -> documents -> review — with curated field grouping and " +
-      "progressive disclosure. None of that design intent is expressible in the AIM, so the " +
-      "generator falls back to a mechanical role x entity cross-product. This is the largest " +
-      "structural hole in the BIM -> AIM -> CAM chain and it blocks the Phase 1 exit criterion " +
-      "of turning a conversation into a usable form.",
-    ids: [
-      "screen.applicant-basic-info",
-      "screen.applicant-documents",
-      "screen.applicant-review",
-      "screen.reviewer-case-detail",
-      "section.applicant.identity",
-      "section.applicant.contact",
-      "section.applicant.finance",
-      "section.applicant.documents",
-      "section.applicant.review-summary",
-      "section.reviewer.case-summary",
-      "field-binding.applicant.legal-name",
-      "field-binding.applicant.customer-type",
-      "field-binding.applicant.country",
-      "field-binding.applicant.tax-id",
-      "field-binding.applicant.dob",
-      "field-binding.applicant.email",
-      "field-binding.applicant.phone",
-      "field-binding.applicant.income",
-      "field-binding.document.type",
-      "field-binding.document.file",
-      "field-binding.review.legal-name",
-      "field-binding.review.customer-type",
-      "field-binding.review.country",
-      "field-binding.review.tax-id",
-      "field-binding.reviewer.case-reference",
-      "field-binding.reviewer.status",
-      "field-binding.reviewer.risk-score",
-      "field-binding.reviewer.risk-band",
-      "field-binding.reviewer.decision-reason",
-    ],
-  },
-  {
-    cause: "aim-model-gap",
-    reason:
       "AIM entities declare `keys` and `fields` but have no `indexes` member, so the persistence " +
       "index intent in the reference CAM cannot be derived. Either AIM gains an index concept or " +
       "the Data Runtime infers indexes from keys and observed query patterns.",

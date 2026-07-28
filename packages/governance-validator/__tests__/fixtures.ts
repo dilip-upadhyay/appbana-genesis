@@ -8,7 +8,7 @@ import { dirname, resolve } from "node:path";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, "..", "..", "..");
 
-export const CAM_SCHEMA_PATH = resolve(REPO_ROOT, "docs/schemas/cam.v0.1.schema.json");
+export const CAM_SCHEMA_PATH = resolve(REPO_ROOT, "docs/schemas/cam.v0.2.schema.json");
 export const CAM_EXAMPLE_PATH = resolve(REPO_ROOT, "examples/customer-onboarding/cam.json");
 export const OP_CONTRACT_EXAMPLE_PATH = resolve(
   REPO_ROOT,

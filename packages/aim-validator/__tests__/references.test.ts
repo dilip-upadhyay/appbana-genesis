@@ -117,6 +117,43 @@ describe("resolveReferences: closest-suggestion", () => {
   });
 });
 
+describe("resolveReferences: interaction flows (ADR-018)", () => {
+  const flows = (aim: Record<string, unknown>): Record<string, unknown>[] =>
+    aim["interactionFlows"] as Record<string, unknown>[];
+
+  it("flags a flow actor pointing at a non-existent role", () => {
+    const aim = clone(loadJson(CUSTOMER_ONBOARDING_AIM_PATH));
+    (flows(aim)[0]!["actors"] as string[]).push("role.nobody");
+    const errors = resolveReferences(aim, collectSymbolTable(aim));
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0]!.rule, "actors");
+    assert.equal(errors[0]!.ref, "role.nobody");
+    assert.match(errors[0]!.path, /^\/interactionFlows\/0\/actors\/\d+$/);
+  });
+
+  it("flags a placement requiredWhen pointing at a non-existent rule", () => {
+    const aim = clone(loadJson(CUSTOMER_ONBOARDING_AIM_PATH));
+    const steps = flows(aim)[0]!["steps"] as Record<string, unknown>[];
+    const groups = steps[0]!["groups"] as Record<string, unknown>[];
+    const placements = groups[0]!["placements"] as Record<string, unknown>[];
+    placements[0]!["requiredWhen"] = "rule.no-such-rule";
+    const errors = resolveReferences(aim, collectSymbolTable(aim));
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0]!.rule, "requiredWhen");
+    assert.deepEqual(errors[0]!.expected, ["rule"]);
+  });
+
+  it("flags a step entryWhen pointing at a role instead of a rule", () => {
+    const aim = clone(loadJson(CUSTOMER_ONBOARDING_AIM_PATH));
+    const steps = flows(aim)[0]!["steps"] as Record<string, unknown>[];
+    steps[0]!["entryWhen"] = "role.applicant";
+    const errors = resolveReferences(aim, collectSymbolTable(aim));
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0]!.rule, "entryWhen");
+    assert.match(errors[0]!.message, /points to a role.*but must point to a rule/);
+  });
+});
+
 describe("resolveReferences: false-positive guard", () => {
   it("ignores strings that do not begin with a known kind prefix", () => {
     // Some entity fields carry free-form strings like sourceBimAttribute; if

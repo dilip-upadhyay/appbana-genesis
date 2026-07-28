@@ -17,11 +17,11 @@ export const AIM_PATH = resolve(here, "../../../examples/customer-onboarding/aim
  */
 export const CAM_PATH = resolve(here, "../../../examples/customer-onboarding/cam.json");
 
-/** Repo-root-relative path to the shipped CAM v0.1 JSON Schema. */
-export const CAM_SCHEMA_PATH = resolve(here, "../../../docs/schemas/cam.v0.1.schema.json");
+/** Repo-root-relative path to the shipped CAM v0.2 JSON Schema. */
+export const CAM_SCHEMA_PATH = resolve(here, "../../../docs/schemas/cam.v0.2.schema.json");
 
-/** Repo-root-relative path to the shipped AIM v0.1 JSON Schema. */
-export const AIM_SCHEMA_PATH = resolve(here, "../../../docs/schemas/aim.v0.1.schema.json");
+/** Repo-root-relative path to the shipped AIM v0.2 JSON Schema. */
+export const AIM_SCHEMA_PATH = resolve(here, "../../../docs/schemas/aim.v0.2.schema.json");
 
 /** Read + parse a JSON file. */
 export function readJson<T = unknown>(path: string): T {

@@ -1,8 +1,8 @@
 {
-  "$comment": "Hand-authored AIM v0.1 for the Customer Onboarding reference scenario. This is the canonical, zero-ambiguity Application Intent Model derived from examples/customer-onboarding/bim.json per ADR-011. Every element has a stable id; every reference resolves; every rule is a structured expression. Human-editable only as a Phase 0 seed — in normal flow the AI Normalization/Resolution/Validation pipeline produces this artifact from the BIM. Downstream, a deterministic generator produces the CAM (10 sub-models) from this AIM.",
+  "$comment": "Hand-authored AIM for the Customer Onboarding reference scenario, validated against aim.v0.2.schema.json. This is the canonical, zero-ambiguity Application Intent Model derived from examples/customer-onboarding/bim.json per ADR-011. Every element has a stable id; every reference resolves; every rule is a structured expression. Human-editable only as a Phase 0 seed — in normal flow the AI Normalization/Resolution/Validation pipeline produces this artifact from the BIM. Downstream, a deterministic generator projects the CAM (10 sub-models) from this AIM; per ADR-018 `interactionFlows` is the source of the CAM InteractionModel and the generator invents nothing.",
 
-  "aimVersion": "0.1.0",
-  "schemaVersion": "0.1",
+  "aimVersion": "0.2.0",
+  "schemaVersion": "0.2",
 
   "metadata": {
     "id": "aim.customer-onboarding",
@@ -10,7 +10,7 @@
     "description": "Canonical model for onboarding retail and small-business banking customers, resolved from the Customer Onboarding BIM.",
     "sourceBim": {
       "id": "bim.customer-onboarding",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "contentHash": "sha256:__pending__"
     },
     "provenance": {
@@ -512,6 +512,110 @@
       "idempotency": { "kind": "state-guarded" },
       "sideEffects": ["transition:t.send-back"],
       "auditEvent": "case.returned-to-reviewer"
+    }
+  ],
+
+  "interactionFlows": [
+    {
+      "id": "flow.applicant-onboarding",
+      "actors": ["role.applicant"],
+      "purpose": "Let a prospective customer describe themselves, supply the documents we need, check their answers, and submit.",
+      "origin": "stated",
+      "sourceBimJourney": "Apply to become a customer",
+      "steps": [
+        {
+          "id": "step.applicant-basic-info",
+          "intent": "capture",
+          "label": "Tell us about you",
+          "groups": [
+            {
+              "id": "group.applicant.identity",
+              "label": "Identity",
+              "placements": [
+                { "id": "placement.applicant.legal-name", "entityRef": "entity.customer", "fieldRef": "legalName", "label": "Legal name" },
+                { "id": "placement.applicant.customer-type", "entityRef": "entity.customer", "fieldRef": "customerType", "label": "You are applying as" },
+                { "id": "placement.applicant.country", "entityRef": "entity.customer", "fieldRef": "country", "label": "Country" },
+                { "id": "placement.applicant.dob", "entityRef": "entity.customer", "fieldRef": "dateOfBirthOrIncorporation", "label": "Date of birth or incorporation" },
+                { "id": "placement.applicant.tax-id", "entityRef": "entity.customer", "fieldRef": "taxIdentifier", "label": "Tax identifier", "helpText": "PAN (India), SSN/ITIN (US individual), EIN (US business)" }
+              ]
+            },
+            {
+              "id": "group.applicant.contact",
+              "label": "How can we reach you?",
+              "placements": [
+                { "id": "placement.applicant.email", "entityRef": "entity.customer", "fieldRef": "contactEmail", "label": "Email address" },
+                { "id": "placement.applicant.phone", "entityRef": "entity.customer", "fieldRef": "contactPhone", "label": "Phone number" }
+              ]
+            },
+            {
+              "id": "group.applicant.finance",
+              "label": "Financial profile",
+              "placements": [
+                { "id": "placement.applicant.income", "entityRef": "entity.customer", "fieldRef": "declaredAnnualIncomeOrTurnover", "label": "Declared annual income or turnover" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "step.applicant-documents",
+          "intent": "capture",
+          "label": "Upload your documents",
+          "groups": [
+            {
+              "id": "group.applicant.documents",
+              "label": "Supporting documents",
+              "placements": [
+                { "id": "placement.document.file", "entityRef": "entity.document", "fieldRef": "storageRef", "label": "File", "capture": "file" },
+                { "id": "placement.document.type", "entityRef": "entity.document", "fieldRef": "documentType", "label": "Document type" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "step.applicant-review",
+          "intent": "review",
+          "label": "Review and submit",
+          "groups": [
+            {
+              "id": "group.applicant.review-summary",
+              "label": "Summary",
+              "placements": [
+                { "id": "placement.review.legal-name", "entityRef": "entity.customer", "fieldRef": "legalName", "label": "Legal name", "mode": "read" },
+                { "id": "placement.review.customer-type", "entityRef": "entity.customer", "fieldRef": "customerType", "label": "Customer type", "mode": "read" },
+                { "id": "placement.review.country", "entityRef": "entity.customer", "fieldRef": "country", "label": "Country", "mode": "read" },
+                { "id": "placement.review.tax-id", "entityRef": "entity.customer", "fieldRef": "taxIdentifier", "label": "Tax identifier", "mode": "read" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flow.reviewer-case-handling",
+      "actors": ["role.reviewer", "role.manager", "role.auditor"],
+      "purpose": "Give staff everything known about a single case, including the internal risk assessment the applicant never sees, so they can decide it.",
+      "origin": "stated",
+      "sourceBimJourney": "Work a case",
+      "steps": [
+        {
+          "id": "step.reviewer-case-detail",
+          "intent": "decide",
+          "label": "Case detail",
+          "groups": [
+            {
+              "id": "group.reviewer.case-summary",
+              "label": "Case",
+              "placements": [
+                { "id": "placement.reviewer.case-reference", "entityRef": "entity.onboarding-case", "fieldRef": "caseReference", "label": "Case reference", "mode": "read" },
+                { "id": "placement.reviewer.status", "entityRef": "entity.onboarding-case", "fieldRef": "status", "label": "Status", "mode": "read" },
+                { "id": "placement.reviewer.risk-score", "entityRef": "entity.onboarding-case", "fieldRef": "riskScore", "label": "Risk score", "mode": "read" },
+                { "id": "placement.reviewer.risk-band", "entityRef": "entity.onboarding-case", "fieldRef": "riskBand", "label": "Risk band", "mode": "read" },
+                { "id": "placement.reviewer.decision-reason", "entityRef": "entity.onboarding-case", "fieldRef": "decisionReason", "label": "Decision reason", "requiredWhen": "rule.decision-reason-required" }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
 

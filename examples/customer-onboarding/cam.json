@@ -1,5 +1,5 @@
 {
-  "$comment": "Hand-authored CAM v0.1 for the Customer Onboarding reference scenario. In normal flow the deterministic CAM generator produces this from aim.json — the hand-authored version is a Phase 0 seed and the round-trip validation gate for the CAM v0.1 schema. Envelope + 10 sub-models per ADR-012; IntegrationModel and DeploymentModel are v0.1 stubs (Phase 3 / Phase 5). Rules use the canonical AST at $defs.expression in the schema. Field-level visibility from the AIM is realized here in SecurityModel.fieldAbacPolicies, not on the field definitions.",
+  "$comment": "Hand-authored CAM for the Customer Onboarding reference scenario, validated against cam.v0.2.schema.json. In normal flow the deterministic CAM generator produces this from aim.json — the hand-authored version is a Phase 0 seed and the round-trip validation gate for the CAM schema. Envelope + 10 sub-models per ADR-012; IntegrationModel and DeploymentModel are v0.1 stubs (Phase 3 / Phase 5). Rules use the canonical AST at $defs.expression in the schema. Field-level visibility from the AIM is realized here in SecurityModel.fieldAbacPolicies, not on the field definitions. Per ADR-018 the InteractionModel is a projection of aim.json interactionFlows — nothing in it is invented here.",
 
   "envelopeVersion": "1.0",
 
@@ -12,7 +12,7 @@
     "generatedAt": "2026-07-23T00:00:00Z",
     "sourceAim": {
       "id": "aim.customer-onboarding",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "contentHash": "sha256:__pending__"
     },
     "generator": {
@@ -23,6 +23,7 @@
 
   "InteractionModel": {
     "version": "0.1.0",
+    "origin": "stated",
     "screens": [
       {
         "id": "screen.applicant-basic-info",

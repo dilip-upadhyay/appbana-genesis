@@ -6,12 +6,24 @@ This directory contains versioned JSON Schemas for every canonical artifact in A
 
 | Schema | File | Version | Status |
 |---|---|---|---|
-| Business Intent Model | [bim.v0.1.schema.json](bim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)) |
-| Application Intent Model | [aim.v0.1.schema.json](aim.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json)) |
-| Canonical Application Model | [cam.v0.1.schema.json](cam.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/cam.json](../../examples/customer-onboarding/cam.json)) |
+| Business Intent Model | [bim.v0.2.schema.json](bim.v0.2.schema.json) | v0.2 | ✅ Published (validated against [examples/customer-onboarding/bim.json](../../examples/customer-onboarding/bim.json)) |
+| Application Intent Model | [aim.v0.2.schema.json](aim.v0.2.schema.json) | v0.2 | ✅ Published (validated against [examples/customer-onboarding/aim.json](../../examples/customer-onboarding/aim.json)) |
+| Canonical Application Model | [cam.v0.2.schema.json](cam.v0.2.schema.json) | v0.2 | ✅ Published (validated against [examples/customer-onboarding/cam.json](../../examples/customer-onboarding/cam.json)) |
 | Operation Contract | [operation-contract.v0.1.schema.json](operation-contract.v0.1.schema.json) | v0.1 | ✅ Published (validated against [examples/customer-onboarding/operation-contracts/customer.submit-onboarding.v1.json](../../examples/customer-onboarding/operation-contracts/customer.submit-onboarding.v1.json)) |
 | Trace Event | [trace-event.v0.1.schema.json](trace-event.v0.1.schema.json) | v0.1 | ✅ Published (validated against 3 fixtures in [examples/customer-onboarding/trace-events/](../../examples/customer-onboarding/trace-events/)) |
 | AI Adapter Manifest | [ai-adapter-manifest.v0.1.schema.json](ai-adapter-manifest.v0.1.schema.json) | v0.1 | ✅ Published (validated against 2 reference-adapter manifests in [examples/customer-onboarding/ai-adapter-manifests/](../../examples/customer-onboarding/ai-adapter-manifests/)) |
+
+### Superseded versions
+
+`bim.v0.1.schema.json`, `aim.v0.1.schema.json` and `cam.v0.1.schema.json` remain in this directory, frozen and unmodified. They are no longer validated in CI and no shipped artifact targets them. They are kept because a published `$id` is a promise: an artifact generated against v0.1 must still be checkable years later, and rewriting the file it validated against would make that impossible.
+
+**What v0.2 added** ([ADR-018](../adr/ADR-018-presentation-intent-ownership.md)) — all three changes are additive, so any v0.1 artifact also validates against v0.2:
+
+| Schema | Added |
+|---|---|
+| BIM v0.2 | optional `userJourneys[]` — prose description of how a persona moves through the capability |
+| AIM v0.2 | optional `interactionFlows[]` — canonical, medium-neutral presentation intent (`flow` / `step` / `group` / `placement`) |
+| CAM v0.2 | optional `InteractionModel.origin` — who decided the layout, so the governance gate can refuse a generator-invented one |
 
 ## Rules
 
@@ -29,4 +41,5 @@ This directory contains versioned JSON Schemas for every canonical artifact in A
 - [ADR-015 — AI Model Adapter Layer & Provenance](../adr/ADR-015-ai-model-adapter-layer.md)
 - [ADR-016 — Deployment Packaging (Kubernetes-first)](../adr/ADR-016-deployment-packaging.md)
 - [ADR-017 — Governance Publication Gate & Rollback](../adr/ADR-017-governance-publication-gate.md)
+- [ADR-018 — Ownership of Presentation Intent](../adr/ADR-018-presentation-intent-ownership.md)
 - [architecture.md § 9 — Canonical Application Model](../../architecture.md)

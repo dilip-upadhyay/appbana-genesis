@@ -25,7 +25,7 @@ Llama — the choice is deployment config, not code.
   `@appbana/prompt-template-registry/prompts/`.
 - `AimValidator` — a `(candidate) => AimValidationResult` function. The default
   helper `createAjvAimValidator({ schema })` wraps Ajv 2020-12 against the
-  workspace's `docs/schemas/aim.v0.1.schema.json`.
+  workspace's `docs/schemas/aim.v0.2.schema.json`.
 - `buildInvocationContext` — factory the kernel uses to synthesize the
   `AIInvocationContext` (trace context, app/cam ids, environment, deterministic
   clock).
@@ -65,7 +65,7 @@ import { loadRegistry } from "@appbana/prompt-template-registry";
 import { readFileSync } from "node:fs";
 
 const registry = await loadRegistry("packages/prompt-template-registry/prompts");
-const aimSchema = JSON.parse(readFileSync("docs/schemas/aim.v0.1.schema.json", "utf8"));
+const aimSchema = JSON.parse(readFileSync("docs/schemas/aim.v0.2.schema.json", "utf8"));
 
 const config: NormalizationAgentConfig = {
   adapter,

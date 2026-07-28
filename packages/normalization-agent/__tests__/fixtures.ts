@@ -13,7 +13,7 @@ export const AIM_SCHEMA_PATH = resolve(
   REPO_ROOT,
   "docs",
   "schemas",
-  "aim.v0.1.schema.json",
+  "aim.v0.2.schema.json",
 );
 
 export const PROMPT_REGISTRY_PATH = resolve(

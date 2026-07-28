@@ -16,7 +16,7 @@ Part of WS-1.3 (Task 3) of the Phase 1 delivery plan. See
 | Output | `GenerateCamResult` = `{ cam, diagnostics, camContentHash }` |
 | Determinism | Given identical inputs (including `generatedAt`) → byte-identical `JSON.stringify(cam)` and identical `camContentHash` |
 | Purity | No wall-clock reads, no `Math.random`, no environment access, no I/O |
-| Schema conformance | Emitted CAM validates against [`docs/schemas/cam.v0.1.schema.json`](../../docs/schemas/cam.v0.1.schema.json) |
+| Schema conformance | Emitted CAM validates against [`docs/schemas/cam.v0.2.schema.json`](../../docs/schemas/cam.v0.2.schema.json) |
 | Diagnostics | Every construct the generator drops or infers emits a structured `CamGeneratorDiagnostic` with a stable code |
 
 ## Public API
@@ -37,7 +37,7 @@ const { cam, diagnostics, camContentHash } = generateCam(aim, {
 });
 ```
 
-## Mapping table (AIM v0.1 → CAM v0.1)
+## Mapping table (AIM v0.2 → CAM v0.2)
 
 ### Envelope
 
@@ -153,18 +153,53 @@ Adapter inference (deterministic; first match wins, always emits a
 
 ### InteractionModel
 
-One `screen` per AIM role (preserving AIM order). Each screen has one
-`section` per AIM entity (preserving AIM order), each section has one
-`fieldBinding` per entity field (preserving order, with `order = index * 10`
-to leave insertion room).
+Since [ADR-018](../../docs/adr/ADR-018-presentation-intent-ownership.md) this
+builder **authors nothing**. Presentation intent lives in AIM
+`interactionFlows[]`, and the generator projects it into the CAM sub-model with
+a mechanical rename. Guessing is not the problem; unattributed guessing is.
 
-Ids:
-- `screen.<role-slug>`
-- `section.<role-slug>.<entity-slug>`
-- `field-binding.<role-slug>.<entity-slug>.<field-slug>` (field-slug is the
-  field id kebab-cased so it matches the schema pattern)
+| AIM `interactionFlows` | CAM `InteractionModel` |
+|---|---|
+| `flow.actors[]` | `screen.assignedTo[]` |
+| `flow.origin` (narrowest across all flows) | `InteractionModel.origin` |
+| `step.<slug>` | `screen.<slug>` |
+| `step.label` | `screen.title` |
+| `step.intent` | `screen.kind` (bijection, below) |
+| `step.entryWhen` | `screen.entryConditionRef` |
+| `group.<slug>` | `section.<slug>` |
+| `group.label` | `section.title` |
+| `group.visibleWhen` | `section.visibleWhenRef` |
+| `placement.<slug>` | `field-binding.<slug>` |
+| `placement.entityRef` + `fieldRef` | `fieldBinding.entityRef` + `fieldRef` |
+| `placement.label` / `helpText` | `fieldBinding.label` / `helpText` |
+| `placement.visibleWhen` / `editableWhen` / `requiredWhen` | `visibleWhenRef` / `editableWhenRef` / `requiredWhenRef` |
+| array position | `order = (index + 1) * 10`, leaving insertion room |
 
-Control inference from `field.type` (+ optional `format`):
+Ids are a pure prefix swap — the leading `step.` / `group.` / `placement.`
+token is replaced by `screen.` / `section.` / `field-binding.` and the rest is
+carried through byte for byte. Every interaction element therefore carries an
+explicit id in the AIM, which is what keeps trace-event ids stable when a
+group is renamed or a field moves between groups.
+
+`step.intent` maps one-to-one onto `screen.kind`, so a projection never has to
+choose:
+
+| AIM intent | CAM kind |
+|---|---|
+| `capture` | `form` |
+| `review` | `review` |
+| `browse` | `list` |
+| `decide` | `detail` |
+| `monitor` | `dashboard` |
+
+Control resolution is medium-neutral and checked in order:
+
+1. `placement.mode === "read"` → `readonly`, whatever the field's type.
+2. `placement.capture` → `long-text`→`textarea`, `choice`→`select`,
+   `file`→`file-upload`, otherwise the same name. This is how a field the
+   DataModel persists as a `string` (a document `storageRef`) renders as a
+   file picker without corrupting its persistence type.
+3. Otherwise inferred from `field.type` (+ optional `format`):
 
 | AIM type | Format | CAM control |
 |---|---|---|
@@ -181,6 +216,30 @@ Control inference from `field.type` (+ optional `format`):
 | `reference` | — | `readonly` |
 | `file` | — | `file-upload` |
 | default | — | `text` |
+
+A placement whose `entityRef`/`fieldRef` does not resolve to a declared AIM
+entity field emits `CAM_GEN_INTERACTION_FIELD_UNRESOLVED` at severity **error**
+and falls back to `text`. It is rendered *and* reported, never silently
+rendered.
+
+#### Fallback when `interactionFlows` is absent
+
+AIM v0.2 makes `interactionFlows` optional; AIM v1.0 will require it. When it
+is missing the generator emits `CAM_GEN_INTERACTION_FLOWS_MISSING` at severity
+**error** and falls back to the pre-ADR-018 behaviour — one screen per role,
+one section per entity, one binding per field, ids
+`screen.<role-slug>` / `section.<role-slug>.<entity-slug>` /
+`field-binding.<role-slug>.<entity-slug>.<field-slug>`.
+
+That model is structurally valid and unusable: it is a wall of inputs in
+declaration order with no grouping, no reading order and no human labels. So it
+is stamped `origin: "generator-fallback"`, and
+`check.accessibility-validation` blocks any CAM carrying that stamp outside a
+`dev` environment.
+
+`origin` aggregates across flows by **weakest claim wins** —
+`derived-default` beats `agent-proposed` beats `stated` — so a single guessed
+flow downgrades the whole sub-model rather than hiding behind a stated one.
 
 ### ObservabilityModel
 
@@ -235,6 +294,8 @@ Each of these is dropped with an info diagnostic `CAM_GEN_AIM_SECTION_DROPPED`:
 | `CAM_GEN_ADAPTER_INFERRED` | info | Records the inferred adapter for an operation. |
 | `CAM_GEN_RULE_KIND_DEFAULT` | warning / info | A rule fell back to a default kind, or a currency literal was normalised. |
 | `CAM_GEN_BOOLEAN_UNWRAPPED` | info | A `{and: [x]}` or `{or: [x]}` shorthand collapsed to `x`. |
+| `CAM_GEN_INTERACTION_FLOWS_MISSING` | **error** | The AIM declared no `interactionFlows`, so the InteractionModel was invented by the generator and stamped `origin: "generator-fallback"`. Blocked outside `dev` by the governance gate. |
+| `CAM_GEN_INTERACTION_FIELD_UNRESOLVED` | **error** | A `placement` points at an entity field the AIM does not declare. The binding is emitted with control `text` so the failure is visible in the model as well as the diagnostics. |
 
 ## Determinism guarantees
 
@@ -261,8 +322,8 @@ npm test
 
 ## References
 
-- [`docs/schemas/cam.v0.1.schema.json`](../../docs/schemas/cam.v0.1.schema.json)
-- [`docs/schemas/aim.v0.1.schema.json`](../../docs/schemas/aim.v0.1.schema.json)
+- [`docs/schemas/cam.v0.2.schema.json`](../../docs/schemas/cam.v0.2.schema.json)
+- [`docs/schemas/aim.v0.2.schema.json`](../../docs/schemas/aim.v0.2.schema.json)
 - [ADR-011: BIM ↔ AIM boundary](../../docs/adr/ADR-011-bim-aim-boundary.md)
 - [ADR-012: Canonical Application Model versioning](../../docs/adr/ADR-012-canonical-application-model-versioning.md)
 - [ADR-013: Runtime engine contract](../../docs/adr/ADR-013-runtime-engine-contract.md)

@@ -2,7 +2,7 @@
 
 Governance Publication Gate ([ADR-017](../../docs/adr/ADR-017-governance-publication-gate.md)) — Phase 1 subset.
 
-Every CAM version activation in production MUST pass ten mandatory gate checks. This package ships the coordinator, the two real Phase 1 checks (`check.schema-validation`, `check.operation-contract-validation`), and eight `phase1Stub` implementations that return `passed` with an explicit evidence marker so downstream consumers can filter stub verdicts until each check lands its real implementation.
+Every CAM version activation in production MUST pass ten mandatory gate checks. This package ships the coordinator, three real checks (`check.schema-validation`, `check.operation-contract-validation`, and a deliberately narrow `check.accessibility-validation`), and seven `phase1Stub` implementations that return `passed` with an explicit evidence marker so downstream consumers can filter stub verdicts until each check lands its real implementation.
 
 ## Design goals
 
@@ -54,10 +54,10 @@ if (report.overallOutcome === "passed") {
 
 | # | Check id | Phase 1 status |
 |---|---|---|
-| 1 | `check.schema-validation` | ✅ REAL (v0.1.0) — Ajv 2020-12 validation of the CAM against `cam.v0.1.schema.json`. |
+| 1 | `check.schema-validation` | ✅ REAL (v0.1.0) — Ajv 2020-12 validation of the CAM against `cam.v0.2.schema.json`. |
 | 2 | `check.security-validation` | 🔒 Stub — `{phase1Stub: true}` |
 | 3 | `check.privacy-validation` | 🔒 Stub |
-| 4 | `check.accessibility-validation` | 🔒 Stub |
+| 4 | `check.accessibility-validation` | ⚠️ PARTIAL (v0.1.0) — enforces one invariant only: a CAM whose `InteractionModel.origin` is `generator-fallback` is **blocked** outside a `dev` environment ([ADR-018](../../docs/adr/ADR-018-presentation-intent-ownership.md)). A layout derived from a role × entity cross-product has no grouping, no reading order and no human labels; nobody looked at it. The environment is read from the CAM's own `metadata.environment` and an absent value fails closed. Evidence publishes `assertionsNotYetImplemented` (contrast, focus order, label association, target size, error identification) so a green verdict is not mistaken for an accessibility guarantee. |
 | 5 | `check.operation-contract-validation` | ✅ REAL (v0.1.0) — every CAM operation has a contract; adapter kind + side effects consistent; `dispatch-operation` refs resolve. |
 | 6 | `check.runtime-compatibility` | 🔒 Stub (also **non-waivable**) |
 | 7 | `check.adapter-capability-coverage` | 🔒 Stub |
@@ -155,6 +155,6 @@ npm run build
 npm test
 ```
 
-- 41 tests across 5 files (canonical, waiver, schema-validation, operation-contract, gate)
+- 50 tests across 6 files (canonical, waiver, schema-validation, operation-contract, accessibility-validation, gate)
 - Full CAM schema validation of the shipped Customer Onboarding CAM
-- ≥ 10 explicit negative-case tests covering the taxonomies of the two real checks
+- ≥ 10 explicit negative-case tests covering the taxonomies of the real checks

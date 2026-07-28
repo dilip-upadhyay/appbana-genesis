@@ -1,7 +1,10 @@
-// Phase 1 stub GateChecks. Each of the eight non-Phase-1 checks returns
+// Phase 1 stub GateChecks. Each of the seven not-yet-implemented checks returns
 // `passed` with a distinguishing `evidence.phase1Stub: true` marker so
 // consumers can filter stub verdicts out of dashboards until the real
 // implementation lands. Waiver rules still apply — see ../waiver.ts.
+//
+// `check.accessibility-validation` left this file when ADR-018 gave it its
+// first enforceable invariant; see ./accessibility-validation.ts.
 //
 // The `version` field is deliberately "0.0.0-phase1-stub" so any downstream
 // registry consumer sees a distinctive semver string and knows the check has
@@ -53,7 +56,6 @@ function makeStubCheck(id: MandatoryCheckId): GateCheck {
 
 export const securityValidationCheck = (): GateCheck => makeStubCheck("check.security-validation");
 export const privacyValidationCheck = (): GateCheck => makeStubCheck("check.privacy-validation");
-export const accessibilityValidationCheck = (): GateCheck => makeStubCheck("check.accessibility-validation");
 export const runtimeCompatibilityCheck = (): GateCheck => makeStubCheck("check.runtime-compatibility");
 export const adapterCapabilityCoverageCheck = (): GateCheck => makeStubCheck("check.adapter-capability-coverage");
 export const performanceBudgetCheck = (): GateCheck => makeStubCheck("check.performance-budget");

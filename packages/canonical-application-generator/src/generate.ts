@@ -45,6 +45,7 @@ export function generateCam(aim: AimDocument, opts: GenerateCamOptions): Generat
   const stateMachines = readArray(aim.stateMachines);
   const rules = readArray(aim.rules);
   const operations = readArray(aim.operations);
+  const interactionFlows = readArray(aim.interactionFlows);
 
   const DataModel = buildDataModel(entities, enums, subModelVersion, diagnostics);
   const workflow = buildWorkflowModel(stateMachines, subModelVersion, diagnostics);
@@ -52,7 +53,13 @@ export function generateCam(aim: AimDocument, opts: GenerateCamOptions): Generat
   const RuleModel = buildRuleModel(rules, subModelVersion, diagnostics);
   const OperationModel = buildOperationModel(operations, entities, subModelVersion, diagnostics);
   const SecurityModel = buildSecurityModel(roles, entities, rules, subModelVersion, diagnostics);
-  const InteractionModel = buildInteractionModel(roles, entities, subModelVersion, diagnostics);
+  const InteractionModel = buildInteractionModel(
+    roles,
+    entities,
+    interactionFlows,
+    subModelVersion,
+    diagnostics,
+  );
   const ObservabilityModel = buildObservabilityModel(
     workflow.emittedEventKinds,
     operations,

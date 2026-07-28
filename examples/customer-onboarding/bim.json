@@ -1,6 +1,6 @@
 {
-  "$comment": "Hand-authored BIM v0.1 for the Customer Onboarding reference scenario. Business-language only. See ADR-011 for the BIM vs AIM contract. This document is the source-of-truth for what business users want; it is intentionally partial and iterative, and the AI translation pipeline (BIM -> AIM -> CAM) resolves it into the deterministic canonical model.",
-  "bimVersion": "0.1.0",
+  "$comment": "Hand-authored BIM for the Customer Onboarding reference scenario, validated against bim.v0.2.schema.json. Business-language only. See ADR-011 for the BIM vs AIM contract and ADR-018 for why `userJourneys` lives here. This document is the source-of-truth for what business users want; it is intentionally partial and iterative, and the AI translation pipeline (BIM -> AIM -> CAM) resolves it into the deterministic canonical model.",
+  "bimVersion": "0.2.0",
   "metadata": {
     "id": "bim.customer-onboarding",
     "name": "Customer Onboarding",
@@ -22,6 +22,13 @@
       "author": "Dilip",
       "summary": "Initial hand-authored BIM for the first vertical slice.",
       "rationale": "Phase 0 reference artifact. Drives the shape of the BIM JSON Schema and the downstream AIM/CAM examples."
+    },
+    {
+      "version": "0.2.0",
+      "date": "2026-07-26",
+      "author": "Dilip",
+      "summary": "Added `userJourneys` for the Applicant and Reviewer paths.",
+      "rationale": "ADR-018. The CAM requires an InteractionModel and no upstream artifact owned it, so the generator invented one from a role x entity cross-product. Journeys give the business user somewhere to say how people move through the capability, and give the AIM `interactionFlows` a stated source instead of a guess."
     }
   ],
 
@@ -145,6 +152,53 @@
       "Approved and rejected cases are read-only forever — no edits, only comments by staff with the right permission."
     ]
   },
+
+  "userJourneys": [
+    {
+      "name": "Apply to become a customer",
+      "persona": "Applicant",
+      "description": "The applicant fills in who they are, uploads what we asked for, checks it over, and submits. All of this happens while the case is still in the Draft stage — the workflow stages are what the bank tracks, this is what the applicant experiences.",
+      "steps": [
+        {
+          "name": "Tell us about you",
+          "description": "Ask for the basics: who they are, how to reach them, and roughly what their financial position is. Group them so it does not feel like one long list.",
+          "asks": [
+            "Full name (individuals) or legal name (businesses)",
+            "Customer type",
+            "Country of residence or registration",
+            "Date of birth (individuals) or date of incorporation (businesses)",
+            "Tax identifier",
+            "Contact email",
+            "Contact phone",
+            "Declared annual income (individuals) or declared annual turnover (businesses)"
+          ]
+        },
+        {
+          "name": "Upload your documents",
+          "description": "Ask them to attach each document we need and say which one it is. Which documents are needed depends on their country and customer type.",
+          "asks": ["Document file", "Document type"]
+        },
+        {
+          "name": "Review and submit",
+          "description": "Show back what they told us so they can catch mistakes before it goes to a reviewer. Nothing is editable here — if it is wrong they go back.",
+          "asks": []
+        }
+      ]
+    },
+    {
+      "name": "Work a case",
+      "persona": "Reviewer",
+      "alsoSeenBy": ["Manager", "Auditor"],
+      "description": "Staff open one case at a time and see everything about it, including the internal risk assessment the applicant never sees. Managers see the same view when a high-risk case is escalated to them; auditors see it read-only.",
+      "steps": [
+        {
+          "name": "Case detail",
+          "description": "Everything known about one case on one page, with the decision reason typed in before approving or rejecting.",
+          "asks": ["Case reference", "Status", "Risk score", "Risk band", "Decision reason"]
+        }
+      ]
+    }
+  ],
 
   "businessRules": [
     {

@@ -2,22 +2,22 @@
   "$comment": "Registry of schema -> example artifacts that CI must round-trip validate. Add one entry per canonical schema as it is published. Paths are workspace-relative.",
   "pairs": [
     {
-      "name": "BIM v0.1 — Customer Onboarding",
-      "schema": "docs/schemas/bim.v0.1.schema.json",
+      "name": "BIM v0.2 — Customer Onboarding",
+      "schema": "docs/schemas/bim.v0.2.schema.json",
       "examples": [
         "examples/customer-onboarding/bim.json"
       ]
     },
     {
-      "name": "AIM v0.1 — Customer Onboarding",
-      "schema": "docs/schemas/aim.v0.1.schema.json",
+      "name": "AIM v0.2 — Customer Onboarding",
+      "schema": "docs/schemas/aim.v0.2.schema.json",
       "examples": [
         "examples/customer-onboarding/aim.json"
       ]
     },
     {
-      "name": "CAM v0.1 — Customer Onboarding",
-      "schema": "docs/schemas/cam.v0.1.schema.json",
+      "name": "CAM v0.2 — Customer Onboarding",
+      "schema": "docs/schemas/cam.v0.2.schema.json",
       "examples": [
         "examples/customer-onboarding/cam.json"
       ]

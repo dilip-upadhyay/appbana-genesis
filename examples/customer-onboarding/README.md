@@ -7,8 +7,8 @@ The first vertical slice for AppBana Genesis. Hand-authored during Phase 0 (WS-0
 | File | Description | Owner | Status |
 |---|---|---|---|
 | [bim.json](bim.json) | Business Intent Model — business-language description of the onboarding capability | Dilip | ✅ v0.1 hand-authored |
-| [aim.json](aim.json) | Application Intent Model — canonical, schema-conformant | Dilip | ✅ v0.1 hand-authored (validated against `aim.v0.1.schema.json`) |
-| [cam.json](cam.json) | Canonical Application Model — 10 sub-models populated (IntegrationModel + DeploymentModel stubbed for Phase 3 / Phase 5) | Dilip | ✅ v0.1 hand-authored (validated against `cam.v0.1.schema.json`) |
+| [aim.json](aim.json) | Application Intent Model — canonical, schema-conformant | Dilip | ✅ v0.2.0 hand-authored (validated against `aim.v0.2.schema.json`) |
+| [cam.json](cam.json) | Canonical Application Model — 10 sub-models populated (IntegrationModel + DeploymentModel stubbed for Phase 3 / Phase 5) | Dilip | ✅ hand-authored (validated against `cam.v0.2.schema.json`); its `InteractionModel` is now reproduced exactly by the deterministic generator — see [ADR-018](../../docs/adr/ADR-018-presentation-intent-ownership.md) |
 | `README.md` | This file | Dilip | ✅ |
 
 ## Scope (per architecture.md § 18)

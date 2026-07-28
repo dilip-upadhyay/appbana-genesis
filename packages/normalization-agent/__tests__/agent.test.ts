@@ -75,7 +75,7 @@ describe("normalizeBim: produced (happy path)", () => {
     assert.equal(result.outcome, "produced", JSON.stringify(result.diagnostics, null, 2));
     assert.deepEqual(result.diagnostics, []);
     assert.ok(result.aim !== undefined);
-    assert.equal(result.aim!["aimVersion"], "0.1.0");
+    assert.equal(result.aim!["aimVersion"], "0.2.0");
     assert.equal(result.promptRef, "prompt.normalization-agent.bim-to-aim");
     assert.equal(result.promptVersion, "1.0.0");
     assert.match(result.bimContentHash, /^sha256:[0-9a-f]{64}$/);

@@ -41,7 +41,7 @@ const addFormats: AddFormatsFn = addFormatsModule.default ?? addFormatsModule;
 
 export interface CreateAjvAimValidatorOptions {
   /**
-   * Parsed AIM v0.1 JSON Schema (contents of `docs/schemas/aim.v0.1.schema.json`).
+   * Parsed AIM JSON Schema (contents of `docs/schemas/aim.v0.2.schema.json`).
    * The caller loads it from disk / bundled asset / URL \u2014 the agent must NOT
    * assume a filesystem location.
    */

@@ -59,12 +59,17 @@ export {
 } from "./checks/operation-contract-validation.js";
 export type { OpContractFailureCode } from "./checks/operation-contract-validation.js";
 
+export {
+  accessibilityValidationCheck,
+  ACCESSIBILITY_CHECK_VERSION,
+  ACCESSIBILITY_FAILURE_CODES,
+} from "./checks/accessibility-validation.js";
+
 // Phase 1 stub factories
 export {
   PHASE1_STUB_VERSION,
   securityValidationCheck,
   privacyValidationCheck,
-  accessibilityValidationCheck,
   runtimeCompatibilityCheck,
   adapterCapabilityCoverageCheck,
   performanceBudgetCheck,

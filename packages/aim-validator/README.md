@@ -4,7 +4,7 @@ Full validator for **Application Intent Model (AIM) v0.1** documents.
 
 Runs three passes in one call:
 
-1. **JSON Schema validation** (Ajv 2020-12) against `docs/schemas/aim.v0.1.schema.json`.
+1. **JSON Schema validation** (Ajv 2020-12) against `docs/schemas/aim.v0.2.schema.json`.
 2. **Symbol table collection** — every declared `id` from roles / enums / entities /
    state machines / operations / rules, plus duplicate-id detection.
 3. **Cross-reference resolution** — every `enumRef` / `entityRef` / `referenceTo` /
@@ -24,7 +24,7 @@ import { validateAim } from "@appbana/aim-validator";
 import { readFileSync } from "node:fs";
 
 const aim = JSON.parse(readFileSync("aim.json", "utf8"));
-const schema = JSON.parse(readFileSync("docs/schemas/aim.v0.1.schema.json", "utf8"));
+const schema = JSON.parse(readFileSync("docs/schemas/aim.v0.2.schema.json", "utf8"));
 
 const report = validateAim(aim, { schema });
 if (!report.valid) {
@@ -64,7 +64,7 @@ Every error carries a **JSON Pointer** so tooling can highlight the exact locati
 
 ## Reference-rule model
 
-The v0.1 built-in ruleset (`DEFAULT_AIM_REFERENCE_RULES`) declares which
+The built-in ruleset (`DEFAULT_AIM_REFERENCE_RULES`) declares which
 property keys carry references. Override with `options.referenceRules` for a
 custom AIM dialect. Rules understand:
 
@@ -74,10 +74,15 @@ custom AIM dialect. Rules understand:
 - `allowVersionSuffix` — strip a trailing `:v<N>` before lookup (used by
   `triggeredBy` for operation refs).
 
+AIM v0.2 added the `interactionFlows` keys `actors` (roles) and `entryWhen` /
+`visibleWhen` / `editableWhen` / `requiredWhen` (rules), so a dangling
+presentation reference is a validator error rather than only a CAM-generator
+diagnostic. See [ADR-018](../../docs/adr/ADR-018-presentation-intent-ownership.md).
+
 Values that do not begin with a known kind prefix are ignored (avoids false
 positives on free-form strings that happen to live under a ref-carrying key).
 Element-level refs only — field-path references inside rule expressions
-(`entity.customer.country`) are out of scope for v0.1.
+(`entity.customer.country`) remain out of scope.
 
 ## Status
 

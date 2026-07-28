@@ -27,6 +27,8 @@ export interface AimDocument {
   readonly stateMachines?: readonly JsonObject[];
   readonly rules?: readonly JsonObject[];
   readonly operations?: readonly JsonObject[];
+  /** ADR-018 presentation intent. Optional at AIM v0.2, required at AIM v1.0. */
+  readonly interactionFlows?: readonly JsonObject[];
   readonly [k: string]: unknown;
 }
 
@@ -92,6 +94,10 @@ export const CAM_GEN_DIAGNOSTIC_CODES = {
   ADAPTER_INFERRED: "CAM_GEN_ADAPTER_INFERRED",
   RULE_KIND_DEFAULT: "CAM_GEN_RULE_KIND_DEFAULT",
   BOOLEAN_UNWRAPPED: "CAM_GEN_BOOLEAN_UNWRAPPED",
+  /** ADR-018: the AIM carried no presentation intent, so the generator guessed. */
+  INTERACTION_FLOWS_MISSING: "CAM_GEN_INTERACTION_FLOWS_MISSING",
+  /** ADR-018: a field placement points at an entity field no AIM entity declares. */
+  INTERACTION_FIELD_UNRESOLVED: "CAM_GEN_INTERACTION_FIELD_UNRESOLVED",
 } as const;
 
 export type CamGenDiagnosticCode =

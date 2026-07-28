@@ -1,7 +1,7 @@
 # ADR-018: Ownership of Presentation Intent
 
-- **Status:** Proposed
-- **Date:** 2026-08-06
+- **Status:** Accepted
+- **Date:** 2026-08-06 (proposed) / 2026-08-07 (accepted)
 - **Deciders:** Dilip Upadhyay
 - **Consulted:** —
 - **Informed:** Platform team, Phase 1 workstream owners (WS-1.3, WS-1.5, WS-1.6)
@@ -65,24 +65,39 @@ Three coordinated changes:
 
 ```
 interactionFlow
-  id            : ^flow\.[a-z][a-z0-9-]*$
-  actor         : roleId                    -- who performs this flow
+  id            : ^flow\.[a-z][a-z0-9.-]*$
+  actors[]      : roleId, minItems 1        -- who performs this flow
   purpose       : nonEmptyString            -- resolved from BIM, human-readable
   origin        : stated | agent-proposed | derived-default
+  sourceBimJourney : string (optional)      -- the BIM userJourney it came from
   steps[]       : ordered, minItems 1
-    id          : ^step\.[a-z][a-z0-9-]*$
-    intent      : capture | confirm | review | decide | monitor
+    id          : ^step\.[a-z][a-z0-9.-]*$
+    intent      : capture | review | browse | decide | monitor
     label       : nonEmptyString
     entryWhen   : ruleRef (optional)
     groups[]    : ordered, minItems 1
-      id        : ^group\.[a-z][a-z0-9-]*$
+      id        : ^group\.[a-z][a-z0-9.-]*$
       label     : nonEmptyString (optional)
       visibleWhen : ruleRef (optional)
-      fields[]  : ordered — { entityRef, fieldRef, label?, helpText?,
-                              editableWhen?, requiredWhen?, visibleWhen? }
+      placements[] : ordered, minItems 1
+        id          : ^placement\.[a-z][a-z0-9.-]*$
+        entityRef   : entityId
+        fieldRef    : nonEmptyString
+        label       : nonEmptyString (optional)
+        helpText    : nonEmptyString (optional)
+        mode        : edit | read  (default edit)
+        capture     : text | long-text | number | money | date | datetime
+                    | boolean | choice | file   (optional)
+        visibleWhen / editableWhen / requiredWhen : ruleRef (optional)
 ```
 
 `step` / `group` / `intent` are medium-neutral. A step is a unit of the user's task, not a rectangle. A web adapter renders a step as a screen; a voice adapter renders it as a turn; a batch importer ignores `label` entirely and reads only the field set. This is the "intent survives technology change" thesis applied to presentation.
+
+The same medium-neutrality governs the two properties that control how a value is supplied. `mode` says *whether* the actor may change the value at this placement; `capture` says *how* it is supplied when they may. They are orthogonal, and neither names a widget: `choice` is a dropdown on a web form and a spoken menu on an IVR; `file` is an upload on the web and an attachment in email. `capture` is optional and exists only for the cases inference cannot reach — in the entire Customer Onboarding reference it is needed exactly once, for a `string` field that holds an object-store handle.
+
+The `intent` enum is a bijection onto the CAM's `screen.kind` (`capture`→`form`, `review`→`review`, `browse`→`list`, `decide`→`detail`, `monitor`→`dashboard`) but is named for the act rather than the display, so a channel with no screens can still honour it.
+
+Every element carries an explicit id, including field placements. That is deliberate and consistent with the rest of the AIM, where nothing is auto-named: a placement is separately addressable so a trace event can answer *"why did this field appear **here**?"* when the same entity field is captured on one step and shown read-only on another. Deriving placement ids from group and field names instead would have made every id churn whenever a group was renamed, invalidating saved trace queries.
 
 **The generator becomes a projection, not an author.** `buildInteractionModel()` maps `flow.step → screen`, `group → section`, `field → fieldBinding`, and derives only what is genuinely mechanical: the `control` from `field.type` + `format` (already specified and already deterministic), and `order` from array position. It invents nothing. When `interactionFlows` is absent it emits a new error-severity diagnostic `CAM_GEN_INTERACTION_FLOWS_MISSING` and falls back to the current role × entity projection stamped `origin: "generator-fallback"` in the sub-model metadata — visible, queryable, and blockable.
 
@@ -126,6 +141,18 @@ Adding a *required* top-level member to AIM is a breaking change and would inval
 
 The intermediate stage keeps the repository green and the migration honest at the same time: existing artifacts still validate, but nothing reaches production on a fallback layout. This mirrors the treatment of `phase1Stub` gate evidence in [DEV-003](../deviations.md) — the stub is allowed to exist, and is not allowed to ship.
 
+The gate reads the target environment from the CAM's own `metadata.environment`, not from a separate gate input. There is deliberately no second place to declare it, because a check whose permissiveness is configured independently of the artifact can be talked into passing. An **absent** environment is treated as non-dev: the check fails closed, so it cannot be disabled by deletion.
+
+### What shipped, and where it differs from the sketch above
+
+The implementation is recorded here because three details were settled during the work and are now binding.
+
+- **`actors[]`, not `actor`.** The reference reviewer screen is assigned to `role.reviewer`, `role.manager` and `role.auditor`. A single-actor flow could not express it, and splitting one flow into three identical copies would have made the CAM three times larger to say the same thing.
+- **`intent` lost `confirm` and gained `browse`.** The original list had two intents (`confirm`, `review`) collapsing onto the CAM's single `review` kind while nothing produced `list`. A bijection removes the ambiguity about which one a projection should choose.
+- **CAM v0.2 was needed too.** `InteractionModel.origin` has nowhere to live in CAM v0.1, whose `interactionModel` is `additionalProperties: false`. `docs/schemas/cam.v0.2.schema.json` adds it as an optional member with a fourth value, `generator-fallback`, which the AIM cannot produce — the AIM has no vocabulary for "the generator gave up", and it should not.
+
+The result: the deterministic generator now reproduces the hand-authored reference `InteractionModel` **exactly** — all 4 screens, 6 sections and 19 field bindings, identical ids, titles, labels, help text, controls, ordering and conditional refs. The one remaining unreproduced element is the `messages` string bundle, which has no AIM source and is tracked separately. Before this change the generator produced a role × entity cross-product that shared not one id with the reference.
+
 ## Consequences
 
 **Positive:**
@@ -150,15 +177,15 @@ The intermediate stage keeps the repository green and the migration honest at th
 
 ## Compliance / Validation
 
-This decision is honoured only if all of the following are mechanically true. Prose agreement is not compliance.
+This decision is honoured only if all of the following are mechanically true. Prose agreement is not compliance. Every item below is implemented; the test that enforces it is named.
 
-1. **Schema round-trip.** `docs/schemas/aim.v0.2.schema.json` and `bim.v0.2.schema.json` are registered in `tools/validate-schemas/schemas.manifest.json` and validated against the Customer Onboarding fixtures in CI.
-2. **The gap registry shrinks, and the test proves it.** `packages/canonical-application-generator/__tests__/roundtrip.test.ts` already fails on any *undocumented* drop and on any *stale* gap id. When the reference AIM gains `interactionFlows`, the 29 `aim-model-gap` screen/section/binding entries must be removed from `KNOWN_GAPS`, and the existing guard tests will fail if they are not. No new test is required to enforce this — the round-trip test was built for exactly this moment.
-3. **The generator may not invent.** A test asserts that for every screen, section and field binding in the generated CAM there is a corresponding `step`, `group` or field entry in the source AIM — a structural surjection check. Any element without a source is a failure.
-4. **Fallback is loud.** A test asserts that generating from an AIM without `interactionFlows` yields a diagnostic with code `CAM_GEN_INTERACTION_FLOWS_MISSING` at severity `error`, and that the resulting `InteractionModel` carries `origin: "generator-fallback"`.
-5. **Fallback cannot ship.** A test asserts `check.accessibility-validation` returns `blocked` for a `generator-fallback` InteractionModel when `environment !== "dev"`, and `passed` (with a warning diagnostic) when it is.
-6. **Origin is preserved end to end.** A test asserts `origin` survives BIM → AIM → CAM and is present on the CAM sub-model, so the Trace Viewer can answer *"who decided this field goes here?"* — the presentation counterpart of the two questions the Trace Viewer must already answer.
-7. **No display vocabulary leaks into AIM.** A schema test asserts the AIM schema contains no `width`, `column`, `css`, `style`, `theme`, `pixel` or `grid` property at any depth. This is the same negative-control discipline used in `@appbana/engine-contract`: state the invariant, then plant the violation and prove it is caught.
+1. **Schema round-trip.** `docs/schemas/bim.v0.2.schema.json`, `aim.v0.2.schema.json` and `cam.v0.2.schema.json` are registered in `tools/validate-schemas/schemas.manifest.json` and validated against the Customer Onboarding fixtures by `pnpm validate:schemas` in CI.
+2. **The gap registry shrinks, and the test proves it.** `packages/canonical-application-generator/__tests__/roundtrip.test.ts` already fails on any *undocumented* drop and on any *stale* gap id. The 29 `aim-model-gap` screen/section/binding entries have been removed from `KNOWN_GAPS`, and the existing stale-gap guard would fail if the generator did not genuinely produce them. No new test was required — the round-trip test was built for exactly this moment.
+3. **The generator may not invent.** `interaction-model.test.ts` asserts three things: that the generated `InteractionModel` deep-equals the hand-authored reference; that every generated screen, section and binding id traces back to a source AIM `step`, `group` or `placement` (a structural surjection check); and that every binding resolves to a declared AIM entity field. A dangling placement produces `CAM_GEN_INTERACTION_FIELD_UNRESOLVED` at severity `error`.
+4. **Fallback is loud.** `interaction-model.test.ts` asserts that generating from an AIM without `interactionFlows` yields `CAM_GEN_INTERACTION_FLOWS_MISSING` at severity `error`, and that the resulting `InteractionModel` carries `origin: "generator-fallback"`.
+5. **Fallback cannot ship.** `accessibility-validation.test.ts` asserts `check.accessibility-validation` returns `blocked` for a `generator-fallback` InteractionModel in `staging`, `canary` and `prod`, `passed` with a warning diagnostic in `dev`, and `blocked` when the environment is unstated. The check also publishes the list of accessibility assertions it has *not* yet implemented, so a green verdict from a provenance-only check cannot be read as "this application is accessible".
+6. **Origin is preserved end to end.** `interaction-model.test.ts` asserts `origin` reaches the CAM sub-model, and that where flows disagree the weakest claim wins — one `derived-default` flow downgrades the whole sub-model, so a guess cannot hide behind a stated journey.
+7. **No display vocabulary leaks into AIM.** `interaction-model.test.ts` walks the AIM schema at every depth and fails on any property name containing `width`, `column`, `css`, `style`, `theme`, `pixel` or `grid`.
 
 ## References
 
@@ -169,5 +196,7 @@ This decision is honoured only if all of the following are mechanically true. Pr
 - [docs/deviations.md — DEV-006](../deviations.md) — the recorded gap this ADR resolves
 - [docs/phase1/README.md](../phase1/README.md) — WS-1.3 (generator), WS-1.5 (UI Runtime), WS-1.6 (React adapter)
 - [architecture.md](../../architecture.md) — CAM sub-model catalogue, Interaction/UI Model
-- `packages/canonical-application-generator/src/interaction-model.ts` — the current role × entity projection
-- `packages/canonical-application-generator/__tests__/roundtrip.test.ts` — the `KNOWN_GAPS` registry pinning the 29-element delta
+- `packages/canonical-application-generator/src/interaction-model.ts` — the projection
+- `packages/canonical-application-generator/__tests__/interaction-model.test.ts` — compliance checks 3, 4, 6, 7
+- `packages/governance-validator/src/checks/accessibility-validation.ts` — compliance check 5
+- `packages/canonical-application-generator/__tests__/roundtrip.test.ts` — the `KNOWN_GAPS` registry, now 29 entries shorter

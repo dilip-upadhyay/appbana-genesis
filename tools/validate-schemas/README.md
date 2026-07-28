@@ -25,7 +25,7 @@ Edit [`schemas.manifest.json`](./schemas.manifest.json):
   "pairs": [
     {
       "name": "AIM v0.1 — Customer Onboarding",
-      "schema": "docs/schemas/aim.v0.1.schema.json",
+      "schema": "docs/schemas/aim.v0.2.schema.json",
       "examples": ["examples/customer-onboarding/aim.json"]
     }
   ]

@@ -1,5 +1,5 @@
 /**
- * Default AIM v0.1 reference-rule set.
+ * Default AIM reference-rule set (v0.2).
  *
  * The rules enumerate every well-known property key that carries a cross-reference
  * to another AIM element (as of the seed Customer Onboarding scenario). Each rule
@@ -41,4 +41,14 @@ export const DEFAULT_AIM_REFERENCE_RULES: readonly AimReferenceRule[] = [
   { key: "ref", cardinality: "scalar", expects: ["rule"] },
   { key: "role-is", cardinality: "scalar", expects: ["role"] },
   { key: "entity", cardinality: "scalar", expects: ["entity"] },
+
+  // Interaction flow references (AIM v0.2, ADR-018). A dangling role or rule
+  // reference inside `interactionFlows` is otherwise only reachable as a CAM
+  // generator diagnostic, which is too late: the AIM is supposed to be the
+  // model in which every reference resolves.
+  { key: "actors", cardinality: "array", expects: ["role"] },
+  { key: "entryWhen", cardinality: "scalar", expects: ["rule"] },
+  { key: "visibleWhen", cardinality: "scalar", expects: ["rule"] },
+  { key: "editableWhen", cardinality: "scalar", expects: ["rule"] },
+  { key: "requiredWhen", cardinality: "scalar", expects: ["rule"] },
 ];

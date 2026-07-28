@@ -62,6 +62,17 @@ Depends on: WS-1.2 (adapters), Phase 0 BIM/AIM/CAM schemas.
 
 **WS-1.3 exit:** ✅ Achieved (2026-07-25) — Task 1 [`normalization-agent`](../../packages/normalization-agent/) produces a validated AIM from a validated BIM with full provenance; Task 2 [`aim-validator`](../../packages/aim-validator/) rejects cross-reference errors with JSON-Pointer diagnostics; Task 3 [`canonical-application-generator`](../../packages/canonical-application-generator/) deterministically emits a CAM validated against the workspace CAM v0.1 schema for the Customer Onboarding AIM; Task 4 [`governance-validator`](../../packages/governance-validator/) returns `passed` for the valid triple and `blocked` (with stable failure codes + JSON-Pointer diagnostics) for a deliberately corrupted CAM; Task 5 [`metadata-registry`](../../packages/metadata-registry/) stores the BIM/AIM/CAM triple by content-hash, verifies integrity on read, and ties the chain together via `verifyProvenanceChain`. Full workspace regression: **277/277 tests across 12 packages, zero failures.**
 
+#### Amendment (2026-08-07) — ADR-018, presentation intent
+
+The completion notes above are the record as of 2026-07-25 and are left unedited. Two things in them are no longer true, and this is the correction rather than a rewrite:
+
+- **All three schema targets moved to v0.2.** `normalization-agent`, `aim-validator`, `canonical-application-generator` and `governance-validator` now validate against `aim.v0.2.schema.json` / `cam.v0.2.schema.json`. The v0.1 files are frozen in place, not deleted.
+- **The generator no longer authors the InteractionModel.** The "screen-per-role interaction model" described in the Task 3 note was a role × entity cross-product that shared not one id with the shipped reference CAM — [DEV-006](../deviations.md), the largest hole in the BIM → AIM → CAM chain. [ADR-018](../adr/ADR-018-presentation-intent-ownership.md) moved presentation intent into the intent chain (BIM `userJourneys[]` → AIM `interactionFlows[]` → CAM `InteractionModel`) and demoted `buildInteractionModel()` to a pure projection. The generator now reproduces the hand-authored reference `InteractionModel` **exactly** — 4 screens, 6 sections, 19 field bindings — and the 29 `aim-model-gap` entries are gone from the round-trip test's `KNOWN_GAPS` registry.
+
+Two new error-severity diagnostics (`CAM_GEN_INTERACTION_FLOWS_MISSING`, `CAM_GEN_INTERACTION_FIELD_UNRESOLVED`) and the first real accessibility gate check make an invented layout loud and unshippable rather than merely wrong. Workspace regression: **409/409 tests, zero failures.**
+
+This is the precondition WS-1.5 (UI Runtime) and WS-1.6 (React adapter) were missing: the CAM they consume now carries a layout a human actually described, so "renders Customer Onboarding end-to-end" becomes a meaningful claim instead of a rendering of a cross-product.
+
 ---
 
 ### WS-1.4 Minimal Platform Kernel
