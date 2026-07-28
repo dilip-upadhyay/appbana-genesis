@@ -7,6 +7,16 @@ const here = dirname(fileURLToPath(import.meta.url));
 /** Repo-root-relative path to the shipped Customer Onboarding AIM. */
 export const AIM_PATH = resolve(here, "../../../examples/customer-onboarding/aim.json");
 
+/**
+ * Repo-root-relative path to the shipped, hand-authored Customer Onboarding CAM.
+ *
+ * This artifact is a Phase 0 design seed, not generator output — its
+ * `metadata.generator.name` is literally `"hand-authored"`. It is the reference
+ * the deterministic generator must eventually reproduce. See `roundtrip.test.ts`
+ * for the invariant that is actually enforced today.
+ */
+export const CAM_PATH = resolve(here, "../../../examples/customer-onboarding/cam.json");
+
 /** Repo-root-relative path to the shipped CAM v0.1 JSON Schema. */
 export const CAM_SCHEMA_PATH = resolve(here, "../../../docs/schemas/cam.v0.1.schema.json");
 
