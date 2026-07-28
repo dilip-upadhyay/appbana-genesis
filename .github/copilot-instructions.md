@@ -21,6 +21,7 @@ Business User → BA Agent → BIM → Normalization Agent → AIM → CAM Gener
 - [docs/adr/README.md](../docs/adr/README.md) — all architectural decisions index
 - [docs/schemas/README.md](../docs/schemas/README.md) — canonical schema catalog
 - [examples/customer-onboarding/README.md](../examples/customer-onboarding/README.md) — first vertical slice reference
+- [docs/deviations.md](../docs/deviations.md) — **register of known gaps between the documentation and the code.** Read this before trusting any tracker or ADR as a description of what is actually implemented. A criterion that moves to match the implementation is not a criterion; editing a tracker to hide a gap is not a resolution.
 
 ## Locked Decisions — Never Reverse Without a New ADR
 
